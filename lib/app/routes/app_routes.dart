@@ -12,12 +12,14 @@ abstract class AppRoutes {
   static const login = '/login';
   static const twoFactor = '/login/2fa';
 
-  // === App principal (multi-perfil) ===
+  // === Home (por role) ===
   static const home = '/home';
+  static const homeGuarda = '/home-guarda';
 
-  // Futuramente, à medida que implementarmos:
-  // static const visitors = '/visitors';
-  // static const tickets = '/tickets';
-  // static const assemblies = '/assemblies';
-  // ...
+  // === Visitantes (condómino) ===
+  static const criarPreAprovacao = '/pre-aprovacoes/criar';
+
+  // === Portaria (funcionário) ===
+  static const validarOtp = '/portaria/validar-otp';
+  static const dentroAgora = '/portaria/dentro-agora';
 }

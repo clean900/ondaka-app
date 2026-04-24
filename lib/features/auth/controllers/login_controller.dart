@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../app/routes/app_routes.dart';
+import '../../../app/routes/home_router.dart';
 import '../../../core/services/auth_service.dart';
 
 /// Controller do ecrã de login.
@@ -78,7 +78,7 @@ class LoginController extends GetxController {
     switch (result) {
       case AuthSuccess():
         // Login OK → navega para home (limpa stack de navegação)
-        Get.offAllNamed(AppRoutes.home);
+        final homeRoute = await HomeRouter.rotaPorRole(); Get.offAllNamed(homeRoute);
       case AuthFailure(message: final msg):
         errorMessage.value = msg;
     }

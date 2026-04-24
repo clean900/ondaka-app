@@ -1,11 +1,13 @@
 import 'package:get/get.dart';
 import '../../features/auth/views/login_view.dart';
 import '../../features/home/views/home_view.dart';
+import '../../features/portaria/views/home_guarda_view.dart';
+import '../../features/portaria/views/validar_otp_view.dart';
+import '../../features/pre_aprovacoes/views/criar_pre_aprovacao_view.dart';
 import '../../features/splash/views/splash_view.dart';
 import 'app_routes.dart';
 
 /// Mapeamento rota → página para o GetX.
-/// Quando adicionares nova feature, regista aqui a sua GetPage.
 abstract class AppPages {
   AppPages._();
 
@@ -22,7 +24,17 @@ abstract class AppPages {
       name: AppRoutes.home,
       page: () => const HomeView(),
     ),
-    // Próximas rotas:
-    // GetPage(name: AppRoutes.twoFactor, page: () => const TwoFactorView()),
+    GetPage(
+      name: AppRoutes.homeGuarda,
+      page: () => const HomeGuardaView(),
+    ),
+    GetPage(
+      name: AppRoutes.criarPreAprovacao,
+      page: () => const CriarPreAprovacaoView(),
+    ),
+    GetPage(
+      name: AppRoutes.validarOtp,
+      page: () => const ValidarOtpView(),
+    ),
   ];
 }

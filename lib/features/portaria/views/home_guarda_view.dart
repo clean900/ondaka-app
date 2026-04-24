@@ -1,23 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/storage_service.dart';
 
-/// Ecrã Home placeholder.
+/// Home do guarda (funcionário de portaria).
 ///
-/// Mostra dados do user logado e permite logout.
-/// Será substituído por dashboard multi-perfil (condómino/admin/guarda/etc.)
-/// nas próximas iterações.
-class HomeView extends StatelessWidget {
-  const HomeView({super.key});
+/// Acesso às operações principais:
+/// - Validar OTP introduzido pelo visitante
+/// - Ver quem está dentro agora
+///
+/// Futuramente: scan de QR, entrada manual, histórico.
+class HomeGuardaView extends StatelessWidget {
+  const HomeGuardaView({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.bgDark,
       appBar: AppBar(
-        title: const Text('ONDAKA'),
+        title: const Text('Portaria'),
+        backgroundColor: AppColors.bgDark,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -33,22 +38,23 @@ class HomeView extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           final user = snapshot.data!;
+
           return SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
 
-                // === Boas-vindas ===
+                // Boas-vindas
                 Text(
-                  'Olá, ${user['name'] ?? 'Utilizador'}',
+                  'Olá, ${user['name'] ?? 'Guarda'}',
                   style: Theme.of(context).textTheme.headlineLarge,
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  user['role'] ?? 'sem role',
-                  style: const TextStyle(
+                const Text(
+                  'Portaria — ONDAKA',
+                  style: TextStyle(
                     color: AppColors.cyanSoft,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -57,42 +63,27 @@ class HomeView extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
 
-                // === Acções rápidas ===
-                _accaoRapida(
-                  icon: Icons.person_add_alt_1,
-                  label: 'Pré-aprovar visitante',
-                  subtitle: 'Autorizar uma visita com antecedência',
-                  onTap: () => Get.toNamed(AppRoutes.criarPreAprovacao),
+                // Botão principal — validar OTP
+                _accaoGrande(
+                  icon: Icons.password,
+                  label: 'Validar código',
+                  subtitle: 'Visitante apresentou OTP de 6 dígitos',
+                  onTap: () => Get.toNamed(AppRoutes.validarOtp),
+                  primary: true,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 14),
 
-                // === Card info ===
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Sessão autenticada',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: AppColors.textFaint,
-                            letterSpacing: 1,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        _infoRow('Email', user['email'] ?? '-'),
-                        _infoRow('User ID', user['id'] ?? '-'),
-                        _infoRow('Empresa ID', user['empresa_gestora_id'] ?? '-'),
-                      ],
-                    ),
-                  ),
+                // Botão secundário — dentro agora
+                _accaoGrande(
+                  icon: Icons.group,
+                  label: 'Quem está dentro',
+                  subtitle: 'Ver visitantes actualmente no condomínio',
+                  onTap: () => Get.toNamed(AppRoutes.dentroAgora),
+                  primary: false,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
 
-                // === Notas ===
+                // Info card
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -122,8 +113,8 @@ class HomeView extends StatelessWidget {
                       ),
                       SizedBox(height: 8),
                       Text(
-                        'O dashboard completo será implementado em iterações seguintes '
-                        'com navegação condicional por role (condómino, admin, guarda, etc.).',
+                        'Scanner de QR e entrada manual serão adicionados em '
+                        'próximas iterações.',
                         style: TextStyle(
                           color: AppColors.textMuted,
                           fontSize: 13,
@@ -141,99 +132,83 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  Widget _accaoRapida({
+  Widget _accaoGrande({
     required IconData icon,
     required String label,
     required String subtitle,
     required VoidCallback onTap,
+    required bool primary,
   }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: AppColors.brandGradient,
+          gradient: primary ? AppColors.brandGradient : null,
+          color: primary ? null : Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.cyan.withValues(alpha: 0.25),
-              blurRadius: 20,
-            ),
-          ],
+          border: primary
+              ? null
+              : Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          boxShadow: primary
+              ? [
+                  BoxShadow(
+                    color: AppColors.cyan.withValues(alpha: 0.25),
+                    blurRadius: 25,
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.15),
+                color: primary
+                    ? Colors.black.withValues(alpha: 0.15)
+                    : AppColors.cyan.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: const Color(0xFF001218), size: 24),
+              child: Icon(
+                icon,
+                color: primary ? const Color(0xFF001218) : AppColors.cyan,
+                size: 26,
+              ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     label,
-                    style: const TextStyle(
-                      color: Color(0xFF001218),
-                      fontSize: 16,
+                    style: TextStyle(
+                      color: primary ? const Color(0xFF001218) : Colors.white,
+                      fontSize: 17,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
                   Text(
                     subtitle,
                     style: TextStyle(
-                      color: Colors.black.withValues(alpha: 0.65),
+                      color: primary
+                          ? Colors.black.withValues(alpha: 0.65)
+                          : Colors.white.withValues(alpha: 0.6),
                       fontSize: 12,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.arrow_forward_ios,
-              color: Color(0xFF001218),
+              color: primary ? const Color(0xFF001218) : AppColors.textMuted,
               size: 16,
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _infoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: AppColors.textFaint,
-                fontSize: 12,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                color: AppColors.textMain,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

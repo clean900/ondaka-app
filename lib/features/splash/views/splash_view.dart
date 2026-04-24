@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../app/routes/app_routes.dart';
+import '../../../app/routes/home_router.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/storage_service.dart';
@@ -8,7 +9,7 @@ import '../../../core/services/storage_service.dart';
 /// Splash screen inicial.
 ///
 /// Responsável por decidir para onde ir depois do arranque:
-/// - Se houver token guardado e válido → /home
+/// - Se houver token guardado e válido → home apropriada à role
 /// - Caso contrário → /login
 class SplashView extends StatefulWidget {
   const SplashView({super.key});
@@ -34,7 +35,12 @@ class _SplashViewState extends State<SplashView> {
 
     if (!mounted) return;
 
-    Get.offAllNamed(isAuthenticated ? AppRoutes.home : AppRoutes.login);
+    if (isAuthenticated) {
+      final homeRoute = await HomeRouter.rotaPorRole();
+      Get.offAllNamed(homeRoute);
+    } else {
+      Get.offAllNamed(AppRoutes.login);
+    }
   }
 
   Future<bool> _checkAuth() async {
