@@ -1,17 +1,30 @@
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 
+import '../../../shared/models/historico_visitas_page.dart';
 import '../../../shared/models/visita.dart';
-import '../repositories/pre_aprovacao_repository.dart';
 
-/// Controller para listar histórico de visitas das fracções do condomino.
+/// Tipo da função que carrega histórico paginado.
+///
+/// Permite ao controller ser usado por condomino (via PreAprovacaoRepository)
+/// ou guarda (via PortariaRepository) — basta passar o método correspondente.
+typedef FetchHistoricoFn = Future<HistoricoVisitasPage> Function({
+  DateTime? desde,
+  DateTime? ate,
+  String? nome,
+  MetodoValidacao? metodo,
+  int page,
+  int perPage,
+});
+
+/// Controller genérico para listar histórico de visitas.
 ///
 /// Suporta filtros opcionais (data, nome, método) e paginação.
+/// Recebe uma callback de fetch — não conhece o repository directamente.
 class HistoricoVisitasController extends GetxController {
-  final PreAprovacaoRepository _repo;
+  final FetchHistoricoFn _fetch;
 
-  HistoricoVisitasController({PreAprovacaoRepository? repo})
-      : _repo = repo ?? PreAprovacaoRepository();
+  HistoricoVisitasController({required FetchHistoricoFn fetch}) : _fetch = fetch;
 
   // Estado
   final visitas = <Visita>[].obs;
@@ -34,13 +47,12 @@ class HistoricoVisitasController extends GetxController {
     carregar();
   }
 
-  /// Carrega 1ª página com filtros actuais.
   Future<void> carregar() async {
     isLoading.value = true;
     erro.value = null;
 
     try {
-      final page = await _repo.historicoVisitas(
+      final page = await _fetch(
         desde: desde.value,
         ate: ate.value,
         nome: nomeFiltro.value.isNotEmpty ? nomeFiltro.value : null,
@@ -62,7 +74,6 @@ class HistoricoVisitasController extends GetxController {
     }
   }
 
-  /// Carrega próxima página (scroll infinito).
   Future<void> carregarMais() async {
     if (isLoadingMore.value) return;
     if (currentPage.value >= lastPage.value) return;
@@ -70,7 +81,7 @@ class HistoricoVisitasController extends GetxController {
     isLoadingMore.value = true;
 
     try {
-      final page = await _repo.historicoVisitas(
+      final page = await _fetch(
         desde: desde.value,
         ate: ate.value,
         nome: nomeFiltro.value.isNotEmpty ? nomeFiltro.value : null,
@@ -90,7 +101,6 @@ class HistoricoVisitasController extends GetxController {
     }
   }
 
-  /// Aplica filtros e recarrega.
   void aplicarFiltros({
     DateTime? novoDesde,
     DateTime? novoAte,
@@ -104,7 +114,6 @@ class HistoricoVisitasController extends GetxController {
     carregar();
   }
 
-  /// Limpa todos os filtros.
   void limparFiltros() {
     desde.value = null;
     ate.value = null;

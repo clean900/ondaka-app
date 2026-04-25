@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../pre_aprovacoes/repositories/pre_aprovacao_repository.dart';
+import '../../pre_aprovacoes/views/historico_visitas_view.dart';
 import 'package:get/get.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
@@ -66,10 +68,17 @@ class HomeView extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 _accaoRapida(
+                  icon: Icons.list_alt,
+                  label: 'Minhas pré-aprovações',
+                  subtitle: 'Ver e cancelar pré-aprovações criadas',
+                  onTap: () => Get.toNamed(AppRoutes.minhasPreAprovacoes),
+                ),
+                const SizedBox(height: 12),
+                _accaoRapida(
                   icon: Icons.history,
                   label: 'Histórico de visitas',
                   subtitle: 'Ver todas as visitas das suas fracções',
-                  onTap: () => Get.toNamed(AppRoutes.historicoVisitas),
+                  onTap: () => Get.to(() => HistoricoVisitasView(fetch: PreAprovacaoRepository().historicoVisitas)),
                 ),
                 const SizedBox(height: 24),
 

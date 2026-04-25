@@ -9,7 +9,13 @@ import '../controllers/historico_visitas_controller.dart';
 /// Lista paginada com filtros (data, nome, método).
 /// Pull-to-refresh + scroll infinito.
 class HistoricoVisitasView extends StatefulWidget {
-  const HistoricoVisitasView({super.key});
+  final FetchHistoricoFn fetch;
+  final String tituloAppBar;
+  const HistoricoVisitasView({
+    super.key,
+    required this.fetch,
+    this.tituloAppBar = 'Histórico de visitas',
+  });
 
   @override
   State<HistoricoVisitasView> createState() => _HistoricoVisitasViewState();
@@ -23,7 +29,7 @@ class _HistoricoVisitasViewState extends State<HistoricoVisitasView> {
   @override
   void initState() {
     super.initState();
-    controller = Get.put(HistoricoVisitasController());
+    controller = Get.put(HistoricoVisitasController(fetch: widget.fetch));
     _scrollController.addListener(_onScroll);
   }
 
@@ -44,7 +50,7 @@ class _HistoricoVisitasViewState extends State<HistoricoVisitasView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Histórico de visitas'),
+        title: Text(widget.tituloAppBar),
         actions: [
           IconButton(
             icon: Icon(_filtrosExpandidos

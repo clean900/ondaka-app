@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../pre_aprovacoes/views/historico_visitas_view.dart';
+import '../repositories/portaria_repository.dart';
+
 import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../core/services/auth_service.dart';
@@ -79,6 +82,17 @@ class HomeGuardaView extends StatelessWidget {
                   label: 'Quem está dentro',
                   subtitle: 'Ver visitantes actualmente no condomínio',
                   onTap: () => Get.toNamed(AppRoutes.dentroAgora),
+                  primary: false,
+                ),
+                const SizedBox(height: 14),
+                _accaoGrande(
+                  icon: Icons.history,
+                  label: 'Histórico de visitas',
+                  subtitle: 'Ver todas as visitas registadas',
+                  onTap: () => Get.to(() => HistoricoVisitasView(
+                        fetch: PortariaRepository().historicoVisitas,
+                        tituloAppBar: 'Histórico do condomínio',
+                      )),
                   primary: false,
                 ),
                 const SizedBox(height: 32),
