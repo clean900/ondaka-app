@@ -64,6 +64,13 @@ class HomeView extends StatelessWidget {
                   subtitle: 'Autorizar uma visita com antecedência',
                   onTap: () => Get.toNamed(AppRoutes.criarPreAprovacao),
                 ),
+                const SizedBox(height: 12),
+                _accaoRapida(
+                  icon: Icons.history,
+                  label: 'Histórico de visitas',
+                  subtitle: 'Ver todas as visitas das suas fracções',
+                  onTap: () => Get.toNamed(AppRoutes.historicoVisitas),
+                ),
                 const SizedBox(height: 24),
 
                 // === Card info ===

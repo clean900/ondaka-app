@@ -18,6 +18,7 @@ abstract class AppRoutes {
 
   // === Visitantes (condómino) ===
   static const criarPreAprovacao = '/pre-aprovacoes/criar';
+  static const historicoVisitas = '/pre-aprovacoes/historico';
 
   // === Portaria (funcionário) ===
   static const validarOtp = '/portaria/validar-otp';

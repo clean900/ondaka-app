@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 
 import '../../../core/services/api_service.dart';
 import '../models/pre_aprovacao.dart';
+import '../../../shared/models/visita.dart';
+import '../../../shared/models/historico_visitas_page.dart';
 
 /// Repository responsável pelas chamadas HTTP relacionadas com pré-aprovações.
 ///
@@ -74,6 +76,52 @@ class PreAprovacaoRepository {
     final response = await _dio.post('/pre-aprovacoes/$id/cancelar');
     final data = response.data['data'] as Map<String, dynamic>;
     return PreAprovacao.fromJson(data);
+  }
+
+
+  /// Obtém histórico de visitas das fracções do condomino autenticado.
+  ///
+  /// Filtros opcionais: data desde/até, nome do visitante, método de validação.
+  /// Retorna paginação completa.
+  Future<HistoricoVisitasPage> historicoVisitas({
+    DateTime? desde,
+    DateTime? ate,
+    String? nome,
+    MetodoValidacao? metodo,
+    int page = 1,
+    int perPage = 20,
+  }) async {
+    final response = await _dio.get(
+      '/pre-aprovacoes/visitas-historico',
+      queryParameters: {
+        if (desde != null) 'desde': _formatDate(desde),
+        if (ate != null) 'ate': _formatDate(ate),
+        if (nome != null && nome.trim().length >= 2) 'nome': nome.trim(),
+        if (metodo != null) 'metodo': metodo.name,
+        'page': page,
+        'per_page': perPage,
+      },
+    );
+
+    final dataList = response.data['data'] as List<dynamic>;
+    final meta = response.data['meta'] as Map<String, dynamic>;
+
+    return HistoricoVisitasPage(
+      visitas: dataList
+          .map((json) => Visita.fromJson(json as Map<String, dynamic>))
+          .toList(),
+      currentPage: meta['current_page'] as int,
+      lastPage: meta['last_page'] as int,
+      total: meta['total'] as int,
+      perPage: meta['per_page'] as int,
+    );
+  }
+
+  /// Formata DateTime para query param (YYYY-MM-DD).
+  String _formatDate(DateTime dt) {
+    return '${dt.year.toString().padLeft(4, '0')}-'
+        '${dt.month.toString().padLeft(2, '0')}-'
+        '${dt.day.toString().padLeft(2, '0')}';
   }
 
   /// Formata DateTime para o formato esperado pela API Laravel.
