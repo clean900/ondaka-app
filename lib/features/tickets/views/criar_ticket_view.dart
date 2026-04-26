@@ -223,7 +223,8 @@ class _CriarTicketViewState extends State<CriarTicketView> {
 
 
     if (id != null && mounted) {
-      Get.back(result: true);
+      await Future.delayed(const Duration(milliseconds: 600));
+      if (mounted) Navigator.of(context).pop(true);
     }
   }
 }
