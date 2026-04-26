@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../pre_aprovacoes/repositories/pre_aprovacao_repository.dart';
 import '../../pre_aprovacoes/views/historico_visitas_view.dart';
 import 'package:get/get.dart';
+import '../../tickets/views/meus_tickets_view.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../core/services/auth_service.dart';
@@ -79,6 +80,13 @@ class HomeView extends StatelessWidget {
                   label: 'Histórico de visitas',
                   subtitle: 'Ver todas as visitas das suas fracções',
                   onTap: () => Get.to(() => HistoricoVisitasView(fetch: PreAprovacaoRepository().historicoVisitas)),
+                ),
+                const SizedBox(height: 12),
+                _accaoRapida(
+                  icon: Icons.confirmation_number_outlined,
+                  label: 'Tickets',
+                  subtitle: 'Reportar problemas e ver os meus pedidos',
+                  onTap: () => Get.to(() => const MeusTicketsView()),
                 ),
                 const SizedBox(height: 24),
 
