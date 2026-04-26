@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "359461535907",
+    "project_id": "ondaka-prod",
+    "storage_bucket": "ondaka-prod.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:359461535907:android:352425fab5352c39f6ff16",
+        "android_client_info": {
+          "package_name": "ao.ondaka.ondaka_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAHrfRPrziYsDdbw2Z6SpPK0TxzJq1tA7I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
