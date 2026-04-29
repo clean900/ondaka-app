@@ -6,6 +6,7 @@ import '../../tickets/views/meus_tickets_view.dart';
 import '../../avisos/views/meus_avisos_view.dart';
 import '../../ordens/views/minhas_ordens_view.dart';
 import '../../assembleias/views/minhas_assembleias_view.dart';
+import '../../faqs/views/faqs_view.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../core/services/auth_service.dart';
@@ -111,6 +112,13 @@ class HomeView extends StatelessWidget {
                   label: 'Minhas ordens',
                   subtitle: 'Facturas e pagamentos',
                   onTap: () => Get.to(() => const MinhasOrdensView()),
+                ),
+                const SizedBox(height: 12),
+                _accaoRapida(
+                  icon: Icons.help_outline,
+                  label: 'FAQs',
+                  subtitle: 'Perguntas frequentes',
+                  onTap: () => Get.to(() => const FaqsView()),
                 ),
                 const SizedBox(height: 24),
 
