@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
 import '../../features/auth/views/login_view.dart';
-import '../../features/home/views/home_view.dart';
+import '../../features/main_shell/views/main_shell_view.dart';
 import '../../features/portaria/views/dentro_agora_view.dart';
 import '../../features/portaria/views/home_guarda_view.dart';
 import '../../features/portaria/views/validar_otp_view.dart';
@@ -15,7 +15,7 @@ abstract class AppPages {
   static final pages = <GetPage>[
     GetPage(name: AppRoutes.splash, page: () => const SplashView()),
     GetPage(name: AppRoutes.login, page: () => const LoginView()),
-    GetPage(name: AppRoutes.home, page: () => const HomeView()),
+    GetPage(name: AppRoutes.home, page: () => const MainShellView()),
     GetPage(name: AppRoutes.homeGuarda, page: () => const HomeGuardaView()),
     GetPage(name: AppRoutes.criarPreAprovacao, page: () => const CriarPreAprovacaoView()),
     GetPage(name: AppRoutes.minhasPreAprovacoes, page: () => const MinhasPreAprovacoesView()),
