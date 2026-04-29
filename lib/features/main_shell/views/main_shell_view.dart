@@ -4,8 +4,9 @@ import 'package:get/get.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../avisos/views/meus_avisos_view.dart';
 import '../../home/views/home_view.dart';
-import '../../pre_aprovacoes/views/minhas_pre_aprovacoes_view.dart';
+import '../../pre_aprovacoes/views/visitas_shell_view.dart';
 import '../controllers/main_shell_controller.dart';
+import 'mais_view.dart';
 
 /// Shell principal da app — Scaffold com bottom navigation.
 /// Substitui o HomeView como rota principal pós-login para condómino.
@@ -18,9 +19,9 @@ class MainShellView extends StatelessWidget {
 
     final tabs = [
       const HomeView(),
-      const MinhasPreAprovacoesView(),
+      const VisitasShellView(),
       const MeusAvisosView(),
-      const _MaisPlaceholderTab(),
+      const MaisView(),
     ];
 
     return Scaffold(
@@ -60,26 +61,6 @@ class MainShellView extends StatelessWidget {
               label: 'Mais',
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Placeholder temporário para a tab "Mais".
-/// Será substituída por uma lista de itens secundários no Passo 4.
-class _MaisPlaceholderTab extends StatelessWidget {
-  const _MaisPlaceholderTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgDark,
-      appBar: AppBar(title: const Text('Mais')),
-      body: const Center(
-        child: Text(
-          'Em construção...',
-          style: TextStyle(color: AppColors.textMuted),
         ),
       ),
     );
