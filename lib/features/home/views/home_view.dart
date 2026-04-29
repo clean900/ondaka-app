@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../tickets/views/meus_tickets_view.dart';
 import '../../avisos/views/meus_avisos_view.dart';
 import '../../ordens/views/minhas_ordens_view.dart';
+import '../../assembleias/views/minhas_assembleias_view.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../core/services/auth_service.dart';
@@ -96,6 +97,13 @@ class HomeView extends StatelessWidget {
                   label: 'Avisos',
                   subtitle: 'Comunicados e informações do condomínio',
                   onTap: () => Get.to(() => const MeusAvisosView()),
+                ),
+                const SizedBox(height: 12),
+                _accaoRapida(
+                  icon: Icons.groups_outlined,
+                  label: 'Assembleias',
+                  subtitle: 'Convocatórias, votações e actas',
+                  onTap: () => Get.to(() => const MinhasAssembleiasView()),
                 ),
                 const SizedBox(height: 12),
                 _accaoRapida(
