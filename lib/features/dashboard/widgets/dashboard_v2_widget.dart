@@ -118,7 +118,7 @@ class _DashboardV2WidgetState extends State<DashboardV2Widget> {
 
           // === Secção Tickets ===
           _seccaoHeader(
-            'Tickets · ${data.ticketsAbertos} abertos',
+            'Pedidos · ${data.ticketsAbertos} abertos',
             onTapVerTodos: () => Get.to(() => const MeusTicketsView()),
           ),
           _CardTicketPlaceholder(

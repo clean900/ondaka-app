@@ -73,7 +73,7 @@ class DashboardCondominoWidget extends StatelessWidget {
               Expanded(
                 child: _StatCard(
                   icon: Icons.confirmation_number_outlined,
-                  label: 'Tickets abertos',
+                  label: 'Pedidos abertos',
                   value: data.ticketsAbertos.toString(),
                   cor: AppColors.cyan,
                   onTap: () => Get.to(() => const MeusTicketsView()),

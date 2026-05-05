@@ -65,8 +65,8 @@ class CriarTicketController extends GetxController {
       );
 
       Get.snackbar(
-        'Ticket criado',
-        'Ticket #${ticket.id} criado com sucesso.',
+        'Pedido criado',
+        'Pedido #${ticket.id} criado com sucesso.',
         snackPosition: SnackPosition.BOTTOM,
       );
       return ticket.id;

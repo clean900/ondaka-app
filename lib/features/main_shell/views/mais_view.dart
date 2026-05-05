@@ -42,7 +42,7 @@ class MaisView extends StatelessWidget {
           _MaisItem(
             icon: Icons.confirmation_number_outlined,
             cor: AppColors.cyan,
-            titulo: 'Tickets',
+            titulo: 'Pedidos',
             subtitulo: 'Reportar problemas e ver os meus pedidos',
             onTap: () => Get.to(() => const MeusTicketsView()),
           ),

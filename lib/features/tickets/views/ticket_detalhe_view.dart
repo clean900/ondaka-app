@@ -37,8 +37,8 @@ class _TicketDetalheViewState extends State<TicketDetalheView> {
     return Scaffold(
       appBar: AppBar(
         title: Obx(() => Text(controller.ticket.value != null
-            ? 'Ticket #${controller.ticket.value!.id}'
-            : 'Ticket')),
+            ? 'Pedido #${controller.ticket.value!.id}'
+            : 'Pedido')),
       ),
       body: Obx(() {
         if (controller.isLoading.value && controller.ticket.value == null) {

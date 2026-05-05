@@ -63,7 +63,7 @@ class TicketDetalheController extends GetxController {
     try {
       await _repo.cancelar(ticketId, motivo: motivo);
       await carregar();
-      Get.snackbar('Cancelado', 'Ticket cancelado com sucesso.');
+      Get.snackbar('Cancelado', 'Pedido cancelado com sucesso.');
       return true;
     } on DioException catch (e) {
       Get.snackbar('Erro', _erroDio(e),

@@ -440,7 +440,7 @@ class _GridKpis extends StatelessWidget {
               child: _KpiCard(
                 icon: Icons.confirmation_number_outlined,
                 cor: AppColors.cyan,
-                label: 'Tickets',
+                label: 'Pedidos',
                 valor: tickets.toString(),
                 sublabel: tickets > 0 ? 'abertos' : 'sem pedidos',
                 onTap: () => Get.to(() => const MeusTicketsView()),
@@ -559,7 +559,7 @@ class _AccoesRapidas extends StatelessWidget {
         Expanded(
           child: _AccaoBotao(
             icon: Icons.confirmation_number_outlined,
-            label: 'Ticket',
+            label: 'Pedido',
             onTap: () => Get.to(() => const MeusTicketsView()),
           ),
         ),
