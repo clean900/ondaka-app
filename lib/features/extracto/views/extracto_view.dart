@@ -317,7 +317,7 @@ class _DecomposicaoTipos extends StatelessWidget {
   String _labelPorTipo(String tipo) {
     switch (tipo) {
       case 'quota_base':
-        return 'Quotas mensais';
+        return 'Taxas de Condomínio mensais';
       case 'fundo_reserva':
         return 'Fundo de reserva';
       case 'despesa_extra':
