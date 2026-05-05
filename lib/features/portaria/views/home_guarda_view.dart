@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../pre_aprovacoes/views/historico_visitas_view.dart';
 import '../repositories/portaria_repository.dart';
+import 'portaria_encomendas_shell_view.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
@@ -73,6 +74,16 @@ class HomeGuardaView extends StatelessWidget {
                   subtitle: 'Visitante apresentou OTP de 6 dígitos',
                   onTap: () => Get.toNamed(AppRoutes.validarOtp),
                   primary: true,
+                ),
+                const SizedBox(height: 14),
+
+                // Encomendas
+                _accaoGrande(
+                  icon: Icons.inventory_2_outlined,
+                  label: 'Encomendas',
+                  subtitle: 'Gerir entregas e levantamentos',
+                  onTap: () => Get.to(() => const PortariaEncomendasShellView()),
+                  primary: false,
                 ),
                 const SizedBox(height: 14),
 

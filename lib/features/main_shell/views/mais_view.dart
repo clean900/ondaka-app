@@ -6,6 +6,8 @@ import '../../../app/theme/app_colors.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../assembleias/views/minhas_assembleias_view.dart';
+import '../../encomendas/views/encomendas_shell_view.dart';
+import '../../extracto/views/extracto_view.dart';
 import '../../faqs/views/faqs_view.dart';
 import '../../ordens/views/minhas_ordens_view.dart';
 import '../../tickets/views/meus_tickets_view.dart';
@@ -23,6 +25,20 @@ class MaisView extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
+          _MaisItem(
+            icon: Icons.inventory_2_outlined,
+            cor: AppColors.purple,
+            titulo: 'Encomendas',
+            subtitulo: 'Pré-anunciar e levantar encomendas',
+            onTap: () => Get.to(() => const EncomendasShellView()),
+          ),
+          _MaisItem(
+            icon: Icons.account_balance_wallet_outlined,
+            cor: AppColors.cyan,
+            titulo: 'Extracto',
+            subtitulo: 'Saldo, quotas e movimentos',
+            onTap: () => Get.to(() => const ExtractoView()),
+          ),
           _MaisItem(
             icon: Icons.confirmation_number_outlined,
             cor: AppColors.cyan,

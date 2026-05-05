@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'app/app.dart';
 import 'core/services/api_service.dart';
@@ -13,6 +14,9 @@ Future<void> main() async {
 
   // Inicializar Firebase ANTES dos services (push depende dele)
   await Firebase.initializeApp();
+
+  // Inicializar dados de formatacao de datas em pt_PT (intl)
+  await initializeDateFormatting('pt_PT', null);
 
   // Regista serviços core na ordem correcta das dependências:
   // Storage → API (usa Storage) → Auth (usa API + Storage) → Push (usa API)
