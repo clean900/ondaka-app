@@ -236,7 +236,7 @@ class _TicketCard extends StatelessWidget {
                         size: 12, color: theme.colorScheme.outline),
                     const SizedBox(width: 4),
                     Text(
-                      'Fracção ${ticket.fraccaoIdentificador}',
+                      'Imóvel ${ticket.fraccaoIdentificador}',
                       style: theme.textTheme.bodySmall,
                     ),
                   ],

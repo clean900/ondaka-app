@@ -96,7 +96,7 @@ class EncomendaCard extends StatelessWidget {
                   if (encomenda.fraccao != null)
                     _MetaItem(
                       icon: Icons.home_outlined,
-                      text: 'Fracção ${encomenda.fraccao!.identificador}',
+                      text: 'Imóvel ${encomenda.fraccao!.identificador}',
                     ),
                   _MetaItem(
                     icon: Icons.event,

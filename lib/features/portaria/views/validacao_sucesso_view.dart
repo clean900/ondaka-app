@@ -83,8 +83,8 @@ class ValidacaoSucessoView extends StatelessWidget {
                 _divider(),
                 _infoRow(
                   icon: Icons.home,
-                  label: 'Fracção',
-                  value: fraccao?.label ?? 'Fracção #${visita.fraccaoId}',
+                  label: 'Imóvel',
+                  value: fraccao?.label ?? 'Imóvel #${visita.fraccaoId}',
                 ),
                 _divider(),
                 _infoRow(

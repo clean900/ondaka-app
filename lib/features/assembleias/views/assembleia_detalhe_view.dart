@@ -175,7 +175,7 @@ class _AssembleiaDetalheViewState extends State<AssembleiaDetalheView> {
                       size: 16, color: theme.colorScheme.primary),
                   const SizedBox(width: 8),
                   Text(
-                    'Tens ${d.numeroFraccoes} fracção(ões) — ${d.permilagemTotal.toStringAsFixed(2)}‰',
+                    'Tens ${d.numeroFraccoes} imóvel(eis) — ${d.permilagemTotal.toStringAsFixed(2)}‰',
                     style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.w600),

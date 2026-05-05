@@ -57,8 +57,8 @@ class _EntregarEncomendaDialogState extends State<EntregarEncomendaDialog> {
   @override
   Widget build(BuildContext context) {
     final fraccaoLabel = widget.encomenda.fraccao != null
-        ? 'Fracção ${widget.encomenda.fraccao!.identificador}'
-        : 'Fracção desconhecida';
+        ? 'Imóvel ${widget.encomenda.fraccao!.identificador}'
+        : 'Imóvel desconhecido';
 
     return AlertDialog(
       backgroundColor: AppColors.surface,

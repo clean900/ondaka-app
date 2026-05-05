@@ -153,7 +153,7 @@ class _TicketDetalheViewState extends State<TicketDetalheView> {
           children: [
             _linhaInfo(Icons.person, 'Aberto por', t.abertoPorNome ?? 'N/A'),
             if (t.fraccaoIdentificador != null)
-              _linhaInfo(Icons.home, 'Fracção', t.fraccaoIdentificador!),
+              _linhaInfo(Icons.home, 'Imóvel', t.fraccaoIdentificador!),
             _linhaInfo(Icons.access_time, 'Criado em', _fmtDateHour(t.createdAt)),
             if (t.atribuidoANome != null)
               _linhaInfo(

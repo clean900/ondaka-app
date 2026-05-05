@@ -245,7 +245,7 @@ class _PreAprovacaoCard extends StatelessWidget {
                     size: 16, color: theme.colorScheme.outline),
                 const SizedBox(width: 4),
                 Text(
-                  'Fracção ${pa.fraccao?.identificador ?? pa.fraccaoId}',
+                  'Imóvel ${pa.fraccao?.identificador ?? pa.fraccaoId}',
                   style: theme.textTheme.bodySmall,
                 ),
               ],

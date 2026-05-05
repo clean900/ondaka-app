@@ -229,7 +229,7 @@ class _HistoricoVisitasViewState extends State<HistoricoVisitasView> {
                 Icon(Icons.home, size: 16, color: theme.colorScheme.outline),
                 const SizedBox(width: 4),
                 Text(
-                  'Fracção ${v.fraccao?.identificador ?? v.fraccaoId}',
+                  'Imóvel ${v.fraccao?.identificador ?? v.fraccaoId}',
                   style: theme.textTheme.bodySmall,
                 ),
                 const SizedBox(width: 16),

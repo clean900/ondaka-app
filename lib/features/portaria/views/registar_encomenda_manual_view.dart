@@ -62,7 +62,7 @@ class _RegistarEncomendaManualViewState
   Future<void> _submeter() async {
     if (!_formKey.currentState!.validate()) return;
     if (_fraccaoEscolhida == null) {
-      Get.snackbar('Fracção obrigatória', 'Escolhe uma fracção da lista.',
+      Get.snackbar('Imóvel obrigatório', 'Escolhe um imóvel da lista.',
           snackPosition: SnackPosition.BOTTOM);
       return;
     }
@@ -106,7 +106,7 @@ class _RegistarEncomendaManualViewState
             const SizedBox(height: 24),
 
             // Fracção
-            const _Label('Fracção *'),
+            const _Label('Imóvel *'),
             const SizedBox(height: 6),
             if (_fraccaoEscolhida != null)
               _FraccaoEscolhida(
@@ -245,7 +245,7 @@ class _FraccaoEscolhida extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Fracção ${fraccao['identificador']}',
+              'Imóvel ${fraccao['identificador']}',
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 14,
@@ -290,7 +290,7 @@ class _PesquisaFraccao extends StatelessWidget {
           style: const TextStyle(color: Colors.white),
           textCapitalization: TextCapitalization.characters,
           decoration: InputDecoration(
-            hintText: 'Pesquisar fracção (ex: 2B)...',
+            hintText: 'Pesquisar imóvel (ex: 2B)...',
             hintStyle: const TextStyle(color: AppColors.textMuted),
             prefixIcon: aPesquisar
                 ? const Padding(
@@ -334,7 +334,7 @@ class _PesquisaFraccao extends StatelessWidget {
                             color: AppColors.textMuted, size: 16),
                         const SizedBox(width: 10),
                         Text(
-                          'Fracção ${f['identificador']}',
+                          'Imóvel ${f['identificador']}',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,

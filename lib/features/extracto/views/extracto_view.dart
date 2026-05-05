@@ -423,7 +423,7 @@ class _MovimentoCard extends StatelessWidget {
                           style: TextStyle(color: AppColors.textMuted)),
                       const SizedBox(width: 6),
                       Text(
-                        'Fracção ${movimento.fraccao!.identificador}',
+                        'Imóvel ${movimento.fraccao!.identificador}',
                         style: const TextStyle(
                           color: AppColors.textMuted,
                           fontSize: 11,

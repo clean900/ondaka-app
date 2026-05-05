@@ -174,7 +174,7 @@ class DentroAgoraView extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      visita.fraccao?.label ?? 'Fracção #${visita.fraccaoId}',
+                      visita.fraccao?.label ?? 'Imóvel #${visita.fraccaoId}',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.6),
                         fontSize: 13,

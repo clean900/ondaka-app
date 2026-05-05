@@ -29,11 +29,11 @@ class Fraccao {
     );
   }
 
-  /// Label curto para UI: "Fracção 2B" ou "Fracção 2B (Piso 1)".
+  /// Label curto para UI: "Imóvel 2B" ou "Imóvel 2B (Piso 1)".
   String get label {
     if (piso != null) {
-      return 'Fracção $identificador (Piso $piso)';
+      return 'Imóvel $identificador (Piso $piso)';
     }
-    return 'Fracção $identificador';
+    return 'Imóvel $identificador';
   }
 }

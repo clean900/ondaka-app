@@ -132,7 +132,7 @@ class _PreAnuncioCard extends StatelessWidget {
                       if (encomenda.fraccao != null) ...[
                         const SizedBox(height: 2),
                         Text(
-                          'Fracção ${encomenda.fraccao!.identificador}',
+                          'Imóvel ${encomenda.fraccao!.identificador}',
                           style: const TextStyle(
                             color: AppColors.textMuted,
                             fontSize: 12,
