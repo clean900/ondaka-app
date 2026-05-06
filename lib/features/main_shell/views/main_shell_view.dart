@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../app/theme/app_colors.dart';
+import '../../../core/services/storage_service.dart';
 import '../../avisos/views/meus_avisos_view.dart';
+import '../../chatbot/views/chatbot_bottomsheet.dart';
 import '../../home/views/home_view.dart';
 import '../../pre_aprovacoes/views/visitas_shell_view.dart';
 import '../controllers/main_shell_controller.dart';
@@ -31,6 +33,13 @@ class MainShellView extends StatelessWidget {
           index: controller.tabIndex.value,
           children: tabs,
         ),
+      ),
+      floatingActionButton: _ChatbotFab(
+        onPressed: () async {
+          final user = await StorageService.to.getUser();
+          if (!context.mounted) return;
+          ChatbotBottomsheet.abrir(context, userName: user['name']);
+        },
       ),
       bottomNavigationBar: Obx(
         () => NavigationBar(
@@ -61,6 +70,48 @@ class MainShellView extends StatelessWidget {
               label: 'Mais',
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// FAB do Chatbot — gradient cyan→purple, ícone smart_toy.
+class _ChatbotFab extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _ChatbotFab({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF06B6D4), Color(0xFFA855F7)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF06B6D4).withValues(alpha: 0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          customBorder: const CircleBorder(),
+          child: const Icon(
+            Icons.smart_toy_outlined,
+            color: Colors.white,
+            size: 26,
+          ),
         ),
       ),
     );
