@@ -15,6 +15,7 @@ class MinhasEncomendasController extends GetxController {
   // Estado global (sem filtro)
   final encomendas = <Encomenda>[].obs;
   final isLoading = false.obs;
+  final addonActivo = true.obs;
   final erro = RxnString();
   final _cancelandoIds = <int>{}.obs;
 
@@ -37,9 +38,14 @@ class MinhasEncomendasController extends GetxController {
     try {
       final lista = await _repo.listar();
       encomendas.value = lista;
+      addonActivo.value = true;
       _separarPorEstado(lista);
     } on DioException catch (e) {
-      erro.value = _extrairErro(e);
+      if (e.response?.statusCode == 403) {
+        addonActivo.value = false;
+      } else {
+        erro.value = _extrairErro(e);
+      }
     } catch (e) {
       erro.value = 'Erro inesperado.';
     } finally {

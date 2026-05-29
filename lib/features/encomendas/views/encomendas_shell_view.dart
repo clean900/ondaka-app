@@ -61,14 +61,60 @@ class _EncomendasShellViewState extends State<EncomendasShellView>
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: const [
-          AguardamChegadaView(),
-          NaPortariaView(),
-          HistoricoEncomendasView(),
-          AutorizadosView(),
-        ],
+      body: Obx(() {
+        final c = Get.find<MinhasEncomendasController>();
+        if (!c.addonActivo.value) {
+          return const _AddonBloqueado();
+        }
+        return TabBarView(
+          controller: _tabController,
+          children: const [
+            AguardamChegadaView(),
+            NaPortariaView(),
+            HistoricoEncomendasView(),
+            AutorizadosView(),
+          ],
+        );
+      }),
+    );
+  }
+}
+
+
+class _AddonBloqueado extends StatelessWidget {
+  const _AddonBloqueado();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Icon(Icons.lock_outline, size: 32, color: AppColors.textFaint),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Funcionalidade não disponível',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textMain),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'A administração do seu condomínio ainda não activou a gestão de encomendas. Fale com a gestão para o disponibilizar.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: AppColors.textMuted, height: 1.5),
+            ),
+          ],
+        ),
       ),
     );
   }
