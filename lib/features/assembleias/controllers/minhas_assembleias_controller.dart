@@ -12,6 +12,7 @@ class MinhasAssembleiasController extends GetxController {
 
   final assembleias = <Assembleia>[].obs;
   final isLoading = false.obs;
+  final addonActivo = true.obs;
   final erro = RxnString();
 
   @override
@@ -25,8 +26,13 @@ class MinhasAssembleiasController extends GetxController {
     erro.value = null;
     try {
       assembleias.value = await _repo.listar();
+      addonActivo.value = true;
     } on DioException catch (e) {
-      erro.value = e.response?.data?['message'] as String? ?? 'Erro ao carregar.';
+      if (e.response?.statusCode == 403) {
+        addonActivo.value = false;
+      } else {
+        erro.value = e.response?.data?['message'] as String? ?? 'Erro ao carregar.';
+      }
     } finally {
       isLoading.value = false;
     }

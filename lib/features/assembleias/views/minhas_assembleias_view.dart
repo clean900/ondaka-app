@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../app/theme/app_colors.dart';
 import '../controllers/minhas_assembleias_controller.dart';
 import '../models/assembleia.dart';
 import 'assembleia_detalhe_view.dart';
@@ -15,6 +16,9 @@ class MinhasAssembleiasView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Assembleias')),
       body: Obx(() {
+        if (!controller.addonActivo.value) {
+          return const _AddonBloqueado();
+        }
         if (controller.isLoading.value && controller.assembleias.isEmpty) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -205,5 +209,45 @@ class _AssembleiaCard extends StatelessWidget {
     final hora = dt.hour.toString().padLeft(2, '0');
     final min = dt.minute.toString().padLeft(2, '0');
     return '$dia/$mes/${dt.year} $hora:$min';
+  }
+}
+
+
+class _AddonBloqueado extends StatelessWidget {
+  const _AddonBloqueado();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Icon(Icons.lock_outline, size: 32, color: AppColors.textFaint),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Funcionalidade não disponível',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textMain),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'A administração do seu condomínio ainda não activou as assembleias virtuais. Fale com a gestão para o disponibilizar.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: AppColors.textMuted, height: 1.5),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
