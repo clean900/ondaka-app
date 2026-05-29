@@ -7,10 +7,19 @@ import '../../../core/services/auth_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../assembleias/views/minhas_assembleias_view.dart';
 import '../../encomendas/views/encomendas_shell_view.dart';
+import '../../prestadores/views/prestadores_view.dart';
+import '../../marketplace/views/marketplace_view.dart';
 import '../../extracto/views/extracto_view.dart';
 import '../../faqs/views/faqs_view.dart';
+import '../../admin_chatbot_faqs/views/admin_chatbot_faqs_page.dart';
+import '../../conheca/views/conheca_view.dart';
+import '../../sos/views/sos_historico_view.dart';
 import '../../ordens/views/minhas_ordens_view.dart';
 import '../../tickets/views/meus_tickets_view.dart';
+import '../../equipa/views/equipa_view.dart';
+import '../../perfil/views/perfil_view.dart';
+import '../../reservas/views/reservas_view.dart';
+// import '../../checklist/views/checklist_lista_view.dart'; // RH/Turnos - fase futura
 
 /// Tab "Mais" — itens secundários acessíveis em lista.
 /// Tickets, Assembleias, Minhas ordens, FAQs, Sair.
@@ -26,6 +35,13 @@ class MaisView extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
           _MaisItem(
+            icon: Icons.account_circle_outlined,
+            cor: AppColors.cyan,
+            titulo: 'Meu Perfil',
+            subtitulo: 'Dados pessoais e password',
+            onTap: () => Get.to(() => const PerfilView()),
+          ),
+          _MaisItem(
             icon: Icons.inventory_2_outlined,
             cor: AppColors.purple,
             titulo: 'Encomendas',
@@ -33,19 +49,55 @@ class MaisView extends StatelessWidget {
             onTap: () => Get.to(() => const EncomendasShellView()),
           ),
           _MaisItem(
+            icon: Icons.storefront_outlined,
+            cor: AppColors.cyan,
+            titulo: 'Marketplace',
+            subtitulo: 'Compra e venda entre vizinhos',
+            onTap: () => Get.to(() => const MarketplaceView()),
+          ),
+          _MaisItem(
+            icon: Icons.handyman_outlined,
+            cor: AppColors.pink,
+            titulo: 'Serviços',
+            subtitulo: 'Encontrar canalizadores, electricistas e mais',
+            onTap: () => Get.to(() => const PrestadoresView()),
+          ),
+          _MaisItem(
+            icon: Icons.event_available_outlined,
+            cor: AppColors.cyan,
+            titulo: 'Reservas',
+            subtitulo: 'Reservar salão, churrasqueira, ginásio',
+            onTap: () => Get.to(() => const ReservasView()),
+          ),
+          _MaisItem(
             icon: Icons.account_balance_wallet_outlined,
             cor: AppColors.cyan,
-            titulo: 'Extracto',
-            subtitulo: 'Saldo, quotas e movimentos',
+            titulo: 'Minhas Taxas de Condomínio',
+            subtitulo: 'Valores a pagar e pagamentos efectuados',
             onTap: () => Get.to(() => const ExtractoView()),
           ),
           _MaisItem(
             icon: Icons.confirmation_number_outlined,
             cor: AppColors.cyan,
-            titulo: 'Pedidos',
+            titulo: 'Pedidos de Intervenção',
             subtitulo: 'Reportar problemas e ver os meus pedidos',
             onTap: () => Get.to(() => const MeusTicketsView()),
           ),
+          _MaisItem(
+            icon: Icons.people_outline,
+            cor: AppColors.pink,
+            titulo: 'Equipa do Condomínio',
+            subtitulo: 'Administradores, gestores, funcionários e prestadores',
+            onTap: () => Get.to(() => const EquipaView()),
+          ),
+          // === Checklists — escondido (RH/Turnos, fase futura) ===
+          // _MaisItem(
+          //   icon: Icons.checklist_rtl,
+          //   cor: AppColors.success,
+          //   titulo: 'Checklists',
+          //   subtitulo: 'Rondas, inspecções e verificações',
+          //   onTap: () => Get.to(() => const ChecklistListaView()),
+          // ),
           _MaisItem(
             icon: Icons.groups_outlined,
             cor: AppColors.info,
@@ -66,6 +118,27 @@ class MaisView extends StatelessWidget {
             titulo: 'FAQs',
             subtitulo: 'Perguntas frequentes',
             onTap: () => Get.to(() => const FaqsView()),
+          ),
+          _MaisItem(
+            icon: Icons.chat_bubble_outline,
+            cor: AppColors.cyan,
+            titulo: 'FAQs do Chatbot',
+            subtitulo: 'Gerir FAQs do condomínio (admin)',
+            onTap: () => Get.to(() => const AdminChatbotFaqsPage()),
+          ),
+          _MaisItem(
+            icon: Icons.auto_awesome_outlined,
+            cor: AppColors.pink,
+            titulo: 'Conheça a ONDAKA',
+            subtitulo: 'Catálogo de funcionalidades da plataforma',
+            onTap: () => Get.to(() => const ConhecaView()),
+          ),
+          _MaisItem(
+            icon: Icons.emergency_outlined,
+            cor: AppColors.danger,
+            titulo: 'Meus alertas SOS',
+            subtitulo: 'Histórico de emergências reportadas',
+            onTap: () => Get.to(() => const SosHistoricoView()),
           ),
 
           const Padding(

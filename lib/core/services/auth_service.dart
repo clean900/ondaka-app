@@ -85,12 +85,24 @@ class AuthService extends GetxService {
     }
   }
 
-  /// Obtém dados actualizados do user autenticado.
-  /// Útil para validar que o token ainda é válido.
+  /// Obtém dados actualizados do user autenticado e SINCRONIZA com o storage.
+  /// Útil para validar que o token ainda é válido e refrescar dados (ex: nome alterado).
   Future<Map<String, dynamic>?> fetchUser() async {
     try {
       final response = await _api.dio.get('/user');
-      return Map<String, dynamic>.from(response.data);
+      final user = Map<String, dynamic>.from(response.data);
+
+      // Re-grava no storage (mantém sincronizado com o backend)
+      final roles = user['roles'] as List? ?? [];
+      await _storage.saveUser(
+        id: user['id'] as int,
+        email: user['email'] as String,
+        name: user['name'] as String,
+        role: roles.isNotEmpty ? roles.first as String : '',
+        empresaGestoraId: user['empresa_gestora_id'] as int,
+      );
+
+      return user;
     } on DioException catch (_) {
       return null;
     }

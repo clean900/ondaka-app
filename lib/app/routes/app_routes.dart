@@ -15,13 +15,19 @@ abstract class AppRoutes {
   // === Home (por role) ===
   static const home = '/home';
   static const homeGuarda = '/home-guarda';
+  static const homeGestor = '/home-gestor';
 
   // === Visitantes (condómino) ===
   static const criarPreAprovacao = '/pre-aprovacoes/criar';
   static const minhasPreAprovacoes = '/pre-aprovacoes/minhas';
   static const historicoVisitas = '/pre-aprovacoes/historico';
 
+  // === Prestadores (condómino) ===
+  static const prestadores = '/prestadores';
+
   // === Portaria (funcionário) ===
   static const validarOtp = '/portaria/validar-otp';
   static const dentroAgora = '/portaria/dentro-agora';
+
+  static const marketplace = '/marketplace';
 }

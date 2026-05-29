@@ -1,13 +1,56 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../../nps/repositories/nps_repository.dart';
+import '../../nps/views/nps_inquerito_view.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../../../core/services/storage_service.dart';
-import '../../dashboard/widgets/dashboard_v3_widget.dart';
+import '../../dashboard/widgets/dashboard_financeiro_widget.dart';
+import '../../../core/services/auth_service.dart';
 
 /// Tab "Início" do MainShell.
 /// Saudação com data + nome em gradient + dashboard v3.
-class HomeView extends StatelessWidget {
+class HomeView extends StatefulWidget {
   const HomeView({super.key});
+
+  @override
+  State<HomeView> createState() => _HomeViewState();
+}
+
+class _HomeViewState extends State<HomeView> {
+  late Future<Map<String, String?>> _userFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _userFuture = StorageService.to.getUser();
+    _verificarNps();
+  }
+
+  Future<void> _verificarNps() async {
+    // Espera a home assentar antes de mostrar o inquerito (nao-intrusivo).
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+    try {
+      final pedidos = await NpsRepository().pedidosPendentes();
+      if (!mounted || pedidos.isEmpty) return;
+      // Mostra apenas o primeiro pedido pendente (um de cada vez).
+      await Get.to(() => NpsInqueritoView(pedido: pedidos.first));
+    } catch (_) {
+      // Silencioso — NPS nunca deve atrapalhar a app.
+    }
+  }
+
+  Future<void> _refresh() async {
+    // 1. Refresh backend → storage
+    await AuthService.to.fetchUser();
+    // 2. Recarrega o Future do storage
+    if (mounted) {
+      setState(() {
+        _userFuture = StorageService.to.getUser();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +58,7 @@ class HomeView extends StatelessWidget {
       backgroundColor: AppColors.bgDark,
       body: SafeArea(
         child: FutureBuilder<Map<String, String?>>(
-          future: StorageService.to.getUser(),
+          future: _userFuture,
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
               return const Center(child: CircularProgressIndicator());
@@ -28,9 +71,7 @@ class HomeView extends StatelessWidget {
             final dataStr = _dataExtenso();
 
             return RefreshIndicator(
-              onRefresh: () async {
-                await Future.delayed(const Duration(milliseconds: 300));
-              },
+              onRefresh: _refresh,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -40,10 +81,11 @@ class HomeView extends StatelessWidget {
                     // === Data com asterisco decorativo ===
                     Row(
                       children: [
-                        const Icon(
-                          Icons.auto_awesome,
-                          color: AppColors.textFaint,
-                          size: 13,
+                        Image.asset(
+                          'assets/images/ondaka-logo.png',
+                          width: 16,
+                          height: 16,
+                          fit: BoxFit.contain,
                         ),
                         const SizedBox(width: 6),
                         Text(
@@ -125,8 +167,8 @@ class HomeView extends StatelessWidget {
 
                     const SizedBox(height: 18),
 
-                    // === Dashboard v3 ===
-                    const DashboardV3Widget(),
+                    // === Dashboard Financeiro (Saldo + Pagar + Gráfico + Movimentos) ===
+                    const DashboardFinanceiroWidget(),
                   ],
                 ),
               ),

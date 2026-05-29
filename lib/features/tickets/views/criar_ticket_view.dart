@@ -38,12 +38,120 @@ class _CriarTicketViewState extends State<CriarTicketView> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Novo ticket')),
+      appBar: AppBar(title: const Text('Novo Pedido de Intervenção')),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            // Condominio dropdown
+            Obx(() {
+              if (controller.isCarregandoFraccoes.value) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                );
+              }
+              if (controller.condominios.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    'Nao tem fraccoes activas em nenhum condominio.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.error,
+                    ),
+                  ),
+                );
+              }
+              // Se so ha 1 condominio, esconder dropdown (ja auto-seleccionado)
+              if (controller.condominios.length == 1) {
+                return const SizedBox.shrink();
+              }
+              return DropdownButtonFormField<int>(
+                decoration: const InputDecoration(
+                  labelText: 'Condominio *',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.apartment),
+                ),
+                initialValue: controller.condominioSelecionado.value?.id,
+                items: controller.condominios
+                    .map((c) => DropdownMenuItem(
+                          value: c.id,
+                          child: Text(c.nome, overflow: TextOverflow.ellipsis),
+                        ))
+                    .toList(),
+                onChanged: (id) {
+                  if (id == null) return;
+                  controller.condominioSelecionado.value =
+                      controller.condominios.firstWhere((c) => c.id == id);
+                  // Reset fraccao quando muda condominio
+                  controller.fraccaoSelecionada.value = null;
+                  // Auto-seleccionar fraccao se so houver 1
+                  final fracs = controller.fraccoesDoCondominio;
+                  if (fracs.length == 1) {
+                    controller.fraccaoSelecionada.value = fracs.first;
+                  }
+                },
+                validator: (v) => v == null ? 'Obrigatorio' : null,
+              );
+            }),
+            Obx(() => controller.condominios.length > 1
+                ? const SizedBox(height: 12)
+                : const SizedBox.shrink()),
+
+            // Imovel (fraccao) dropdown
+            Obx(() {
+              final fracs = controller.fraccoesDoCondominio;
+              if (controller.condominioSelecionado.value == null) {
+                return const SizedBox.shrink();
+              }
+              if (fracs.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    'Nao tem imoveis activos neste condominio.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.error,
+                    ),
+                  ),
+                );
+              }
+              // Se so ha 1 fraccao, esconder dropdown (ja auto-seleccionado)
+              if (fracs.length == 1) {
+                return const SizedBox.shrink();
+              }
+              return DropdownButtonFormField<int>(
+                decoration: const InputDecoration(
+                  labelText: 'Imovel *',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.home),
+                ),
+                initialValue: controller.fraccaoSelecionada.value?.id,
+                items: fracs
+                    .map((f) => DropdownMenuItem(
+                          value: f.id,
+                          child: Text(f.labelCompleto,
+                              overflow: TextOverflow.ellipsis),
+                        ))
+                    .toList(),
+                onChanged: (id) {
+                  if (id == null) return;
+                  controller.fraccaoSelecionada.value =
+                      fracs.firstWhere((f) => f.id == id);
+                },
+                validator: (v) => v == null ? 'Obrigatorio' : null,
+              );
+            }),
+            Obx(() => controller.fraccoesDoCondominio.length > 1
+                ? const SizedBox(height: 12)
+                : const SizedBox.shrink()),
+
             TextFormField(
               controller: _tituloController,
               decoration: const InputDecoration(
@@ -80,28 +188,83 @@ class _CriarTicketViewState extends State<CriarTicketView> {
             ),
             const SizedBox(height: 12),
 
-            // Categoria
+            // Tipo: Particular ou Publico
+            Text('Tipo *', style: theme.textTheme.labelLarge),
+            const SizedBox(height: 4),
+            Text(
+              'Particular: visivel a si e gestao. Publico: visivel a todos os condominos (podem apoiar).',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.outline,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Obx(() => SegmentedButton<TicketTipo>(
+                  segments: TicketTipo.values
+                      .map((t) => ButtonSegment(
+                            value: t,
+                            icon: Icon(t.icon, size: 16),
+                            label: Text(t.label),
+                          ))
+                      .toList(),
+                  selected: {controller.tipo.value},
+                  onSelectionChanged: (s) {
+                    controller.tipo.value = s.first;
+                    // Limpa categoria selecionada quando muda o tipo
+                    controller.categoriaSelecionada.value = null;
+                  },
+                )),
+            const SizedBox(height: 16),
+
+            // Categoria dinamica (filtrada pelo tipo)
             Text('Categoria *', style: theme.textTheme.labelLarge),
             const SizedBox(height: 8),
-            Obx(() => Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: TicketCategoria.values.map((cat) {
-                    final selected = controller.categoria.value == cat;
-                    return ChoiceChip(
-                      label: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(cat.icon, size: 14),
-                          const SizedBox(width: 4),
-                          Text(cat.label),
-                        ],
-                      ),
-                      selected: selected,
-                      onSelected: (_) => controller.categoria.value = cat,
-                    );
-                  }).toList(),
-                )),
+            Obx(() {
+              if (controller.isCarregandoCategorias.value) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                );
+              }
+              final lista = controller.categoriasDoTipo;
+              if (lista.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    'Sem categorias disponiveis para este tipo.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.outline,
+                    ),
+                  ),
+                );
+              }
+              return Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: lista.map((cat) {
+                  final selected =
+                      controller.categoriaSelecionada.value?.id == cat.id;
+                  return ChoiceChip(
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(cat.materialIcon, size: 14),
+                        const SizedBox(width: 4),
+                        Text(cat.nome),
+                      ],
+                    ),
+                    selected: selected,
+                    onSelected: (_) =>
+                        controller.categoriaSelecionada.value = cat,
+                  );
+                }).toList(),
+              );
+            }),
             const SizedBox(height: 16),
 
             // Prioridade
@@ -162,7 +325,7 @@ class _CriarTicketViewState extends State<CriarTicketView> {
                       : const Icon(Icons.send),
                   label: Text(controller.isSubmitting.value
                       ? 'A criar...'
-                      : 'Criar ticket'),
+                      : 'Criar Pedido'),
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
                   ),
@@ -212,11 +375,23 @@ class _CriarTicketViewState extends State<CriarTicketView> {
     if (!_formKey.currentState!.validate()) return;
 
 
-    // Por enquanto, hardcoded condominio_id=2 (Paparazzi) para teste.
-    // Em iteração futura: dropdown de fracções do condomino.
+    // Validar selecao de condominio e fraccao
+    final cond = controller.condominioSelecionado.value;
+    final frac = controller.fraccaoSelecionada.value;
+    if (cond == null) {
+      Get.snackbar('Falta condominio', 'Seleccione um condominio.',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    if (frac == null) {
+      Get.snackbar('Falta imovel', 'Seleccione um imovel.',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
     final id = await controller.submeter(
-      condominioId: 2,
-      fraccaoId: 68,
+      condominioId: cond.id,
+      fraccaoId: frac.id,
       titulo: _tituloController.text.trim(),
       descricao: _descricaoController.text.trim(),
     );

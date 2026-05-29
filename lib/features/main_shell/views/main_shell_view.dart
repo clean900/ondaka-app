@@ -2,45 +2,100 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../app/theme/app_colors.dart';
+import '../../../core/services/auth_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../avisos/views/meus_avisos_view.dart';
 import '../../chatbot/views/chatbot_bottomsheet.dart';
+import '../../sos/views/sos_bottomsheet.dart';
 import '../../home/views/home_view.dart';
+import '../../suporte/views/suporte_view.dart';
 import '../../pre_aprovacoes/views/visitas_shell_view.dart';
 import '../controllers/main_shell_controller.dart';
 import 'mais_view.dart';
+import '../../notificacoes/widgets/notificacao_sino.dart';
 
 /// Shell principal da app — Scaffold com bottom navigation.
 /// Substitui o HomeView como rota principal pós-login para condómino.
-class MainShellView extends StatelessWidget {
+class MainShellView extends StatefulWidget {
   const MainShellView({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = Get.put(MainShellController());
+  State<MainShellView> createState() => _MainShellViewState();
+}
 
+class _MainShellViewState extends State<MainShellView>
+    with WidgetsBindingObserver {
+  late final MainShellController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.put(MainShellController());
+    WidgetsBinding.instance.addObserver(this);
+    // Refresh dados do user ao abrir a app (corrige Bug B-USER-01)
+    AuthService.to.fetchUser();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Refresh quando app volta do background (corrige Bug B-USER-01)
+    if (state == AppLifecycleState.resumed) {
+      AuthService.to.fetchUser();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final tabs = [
       const HomeView(),
       const VisitasShellView(),
       const MeusAvisosView(),
+      const SuporteView(),
       const MaisView(),
     ];
 
     return Scaffold(
       backgroundColor: AppColors.bgDark,
-      body: Obx(
-        () => IndexedStack(
-          index: controller.tabIndex.value,
-          children: tabs,
+      body: Stack(
+        children: [
+          Obx(
+            () => IndexedStack(
+              index: controller.tabIndex.value,
+              children: tabs,
+            ),
+          ),
+          // === Sino de notificações flutuante ===
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            right: 16,
+            child: const NotificacaoSino(),
+          ),
+        ],
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _SosFab(onPressed: () => SosBottomsheet.abrir(context)),
+            _ChatbotFab(
+              onPressed: () async {
+                final user = await StorageService.to.getUser();
+                if (!context.mounted) return;
+                ChatbotBottomsheet.abrir(context, userName: user['name']);
+              },
+            ),
+          ],
         ),
       ),
-      floatingActionButton: _ChatbotFab(
-        onPressed: () async {
-          final user = await StorageService.to.getUser();
-          if (!context.mounted) return;
-          ChatbotBottomsheet.abrir(context, userName: user['name']);
-        },
-      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       bottomNavigationBar: Obx(
         () => NavigationBar(
           selectedIndex: controller.tabIndex.value,
@@ -60,9 +115,14 @@ class MainShellView extends StatelessWidget {
               label: 'Visitas',
             ),
             NavigationDestination(
-              icon: Icon(Icons.notifications_outlined),
-              selectedIcon: Icon(Icons.notifications, color: AppColors.cyan),
+              icon: Icon(Icons.campaign_outlined),
+              selectedIcon: Icon(Icons.campaign, color: AppColors.cyan),
               label: 'Avisos',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.support_agent_outlined),
+              selectedIcon: Icon(Icons.support_agent, color: AppColors.cyan),
+              label: 'Suporte',
             ),
             NavigationDestination(
               icon: Icon(Icons.menu_outlined),
@@ -77,6 +137,57 @@ class MainShellView extends StatelessWidget {
 }
 
 /// FAB do Chatbot — gradient cyan→purple, ícone smart_toy.
+/// FAB SOS — canto inferior esquerdo, vermelho com pulse subtil para chamar atenção.
+class _SosFab extends StatefulWidget {
+  final VoidCallback onPressed;
+  const _SosFab({required this.onPressed});
+
+  @override
+  State<_SosFab> createState() => _SosFabState();
+}
+
+class _SosFabState extends State<_SosFab> with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _pulse,
+      builder: (_, child) {
+        final scale = 1.0 + 0.04 * _pulse.value;
+        return Transform.scale(scale: scale, child: child);
+      },
+      child: FloatingActionButton.extended(
+        heroTag: 'sos_fab',
+        onPressed: widget.onPressed,
+        backgroundColor: const Color(0xFFDC2626),
+        foregroundColor: Colors.white,
+        elevation: 8,
+        icon: const Icon(Icons.emergency_outlined, size: 22),
+        label: const Text(
+          'SOS',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.8),
+        ),
+      ),
+    );
+  }
+}
+
 class _ChatbotFab extends StatelessWidget {
   final VoidCallback onPressed;
 

@@ -1,5 +1,25 @@
 import 'package:flutter/material.dart';
 
+/// Tipo de pedido: particular (privado) ou publico (visivel a todos os condominos).
+enum TicketTipo {
+  particular('particular', 'Particular', Icons.lock_outline),
+  publico('publico', 'Publico', Icons.public);
+
+  final String slug;
+  final String label;
+  final IconData icon;
+
+  const TicketTipo(this.slug, this.label, this.icon);
+
+  static TicketTipo fromString(String? value) {
+    if (value == null) return TicketTipo.particular;
+    return TicketTipo.values.firstWhere(
+      (e) => e.slug == value,
+      orElse: () => TicketTipo.particular,
+    );
+  }
+}
+
 /// Categorias possíveis de tickets.
 enum TicketCategoria {
   manutencao('manutencao', 'Manutenção', Icons.build),
@@ -148,6 +168,40 @@ class TicketComentario {
   }
 }
 
+/// Categoria dinamica vinda do backend (GET /api/tickets/categorias).
+/// Cada empresa pode ter as suas proprias categorias com tipo (particular/publico).
+class TicketCategoriaDinamica {
+  final int id;
+  final String nome;
+  final String slug;
+  final String? icone;
+  final String tipo; // particular | publico
+  final int ordem;
+
+  TicketCategoriaDinamica({
+    required this.id,
+    required this.nome,
+    required this.slug,
+    this.icone,
+    required this.tipo,
+    required this.ordem,
+  });
+
+  /// Devolve o IconData Material correspondente ao slug.
+  IconData get materialIcon => TicketCategoria.fromString(slug).icon;
+
+  factory TicketCategoriaDinamica.fromJson(Map<String, dynamic> json) {
+    return TicketCategoriaDinamica(
+      id: json['id'] as int,
+      nome: json['nome'] as String,
+      slug: json['slug'] as String,
+      icone: json['icone'] as String?,
+      tipo: json['tipo'] as String? ?? 'particular',
+      ordem: (json['ordem'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
 /// Modelo principal Ticket.
 class Ticket {
   final int id;
@@ -161,6 +215,15 @@ class Ticket {
   final TicketCategoria categoria;
   final TicketPrioridade prioridade;
   final TicketEstado estado;
+  final TicketTipo tipo;
+  final int? categoriaId;
+  final String? categoriaNome;
+  final int? atribuidoAEmpresaId;
+  final DateTime? canceladoEm;
+  final String? motivoCancelamento;
+  final int totalApoios;
+  final bool apoiadoPeloUser;
+  final String? atribuidoAEmpresaNome;
   final DateTime? atribuidoEm;
   final DateTime? resolvidoEm;
   final DateTime? fechadoEm;
@@ -188,6 +251,15 @@ class Ticket {
     required this.categoria,
     required this.prioridade,
     required this.estado,
+    required this.tipo,
+    this.categoriaId,
+    this.categoriaNome,
+    this.atribuidoAEmpresaId,
+    this.canceladoEm,
+    this.motivoCancelamento,
+    this.totalApoios = 0,
+    this.apoiadoPeloUser = false,
+    this.atribuidoAEmpresaNome,
     this.atribuidoEm,
     this.resolvidoEm,
     this.fechadoEm,
@@ -202,6 +274,55 @@ class Ticket {
     this.comentarios = const [],
   });
 
+
+  /// Cria uma copia com campos alterados (util para optimistic UI).
+  Ticket copyWith({
+    int? totalApoios,
+    bool? apoiadoPeloUser,
+    TicketEstado? estado,
+    DateTime? canceladoEm,
+    String? motivoCancelamento,
+    int? atribuidoAUserId,
+    String? atribuidoANome,
+    int? atribuidoAEmpresaId,
+    String? atribuidoAEmpresaNome,
+  }) {
+    return Ticket(
+      id: id,
+      empresaGestoraId: empresaGestoraId,
+      condominioId: condominioId,
+      abertoPorUserId: abertoPorUserId,
+      fraccaoId: fraccaoId,
+      atribuidoAUserId: atribuidoAUserId ?? this.atribuidoAUserId,
+      atribuidoAEmpresaId: atribuidoAEmpresaId ?? this.atribuidoAEmpresaId,
+      titulo: titulo,
+      descricao: descricao,
+      tipo: tipo,
+      categoriaId: categoriaId,
+      categoriaNome: categoriaNome,
+      categoria: categoria,
+      prioridade: prioridade,
+      estado: estado ?? this.estado,
+      atribuidoEm: atribuidoEm,
+      resolvidoEm: resolvidoEm,
+      fechadoEm: fechadoEm,
+      canceladoEm: canceladoEm ?? this.canceladoEm,
+      motivoCancelamento: motivoCancelamento ?? this.motivoCancelamento,
+      threadsPublicas: threadsPublicas,
+      totalApoios: totalApoios ?? this.totalApoios,
+      apoiadoPeloUser: apoiadoPeloUser ?? this.apoiadoPeloUser,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      abertoPorNome: abertoPorNome,
+      atribuidoANome: atribuidoANome ?? this.atribuidoANome,
+      atribuidoAEmpresaNome: atribuidoAEmpresaNome ?? this.atribuidoAEmpresaNome,
+      fraccaoIdentificador: fraccaoIdentificador,
+      condominioNome: condominioNome,
+      fotos: fotos,
+      comentarios: comentarios,
+    );
+  }
+
   factory Ticket.fromJson(Map<String, dynamic> json) {
     return Ticket(
       id: json['id'] as int,
@@ -215,6 +336,17 @@ class Ticket {
       categoria: TicketCategoria.fromString(json['categoria'] as String),
       prioridade: TicketPrioridade.fromString(json['prioridade'] as String),
       estado: TicketEstado.fromString(json['estado'] as String),
+      tipo: TicketTipo.fromString(json['tipo'] as String?),
+      categoriaId: json['categoria_id'] as int?,
+      categoriaNome: (json['categoria_obj'] as Map?)?['nome'] as String?,
+      atribuidoAEmpresaId: json['atribuido_a_empresa_id'] as int?,
+      canceladoEm: json['cancelado_em'] != null
+          ? DateTime.parse(json['cancelado_em'] as String).toLocal()
+          : null,
+      motivoCancelamento: json['motivo_cancelamento'] as String?,
+      totalApoios: (json['total_apoios'] as num?)?.toInt() ?? 0,
+      apoiadoPeloUser: json['apoiado_pelo_user'] as bool? ?? false,
+      atribuidoAEmpresaNome: (json['atribuido_a_empresa'] as Map?)?['nome'] as String?,
       atribuidoEm: json['atribuido_em'] != null
           ? DateTime.parse(json['atribuido_em'] as String).toLocal()
           : null,

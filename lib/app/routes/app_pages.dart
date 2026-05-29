@@ -3,10 +3,13 @@ import '../../features/auth/views/login_view.dart';
 import '../../features/main_shell/views/main_shell_view.dart';
 import '../../features/portaria/views/dentro_agora_view.dart';
 import '../../features/portaria/views/home_guarda_view.dart';
+import '../../features/sos_gestor/views/home_gestor_view.dart';
 import '../../features/portaria/views/validar_otp_view.dart';
 import '../../features/pre_aprovacoes/views/criar_pre_aprovacao_view.dart';
 import '../../features/pre_aprovacoes/views/minhas_pre_aprovacoes_view.dart';
 import '../../features/splash/views/splash_view.dart';
+import '../../features/prestadores/views/prestadores_view.dart';
+import '../../features/marketplace/views/marketplace_view.dart';
 import 'app_routes.dart';
 
 abstract class AppPages {
@@ -17,9 +20,12 @@ abstract class AppPages {
     GetPage(name: AppRoutes.login, page: () => const LoginView()),
     GetPage(name: AppRoutes.home, page: () => const MainShellView()),
     GetPage(name: AppRoutes.homeGuarda, page: () => const HomeGuardaView()),
+    GetPage(name: AppRoutes.homeGestor, page: () => const HomeGestorView()),
     GetPage(name: AppRoutes.criarPreAprovacao, page: () => const CriarPreAprovacaoView()),
     GetPage(name: AppRoutes.minhasPreAprovacoes, page: () => const MinhasPreAprovacoesView()),
     GetPage(name: AppRoutes.validarOtp, page: () => const ValidarOtpView()),
+    GetPage(name: AppRoutes.prestadores, page: () => const PrestadoresView()),
     GetPage(name: AppRoutes.dentroAgora, page: () => const DentroAgoraView()),
+    GetPage(name: AppRoutes.marketplace, page: () => const MarketplaceView()),
   ];
 }

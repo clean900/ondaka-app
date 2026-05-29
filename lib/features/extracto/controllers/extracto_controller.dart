@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 
 import '../models/extracto_saldo.dart';
+import '../models/mes_grafico.dart';
 import '../models/movimento.dart';
 import '../repositories/extracto_repository.dart';
 
@@ -15,9 +16,11 @@ class ExtractoController extends GetxController {
   // Estado
   final saldo = Rxn<ExtractoSaldo>();
   final movimentos = <Movimento>[].obs;
+  final grafico = <MesGrafico>[].obs;
 
   final isLoadingSaldo = false.obs;
   final isLoadingMovimentos = false.obs;
+  final isLoadingGrafico = false.obs;
   final erro = RxnString();
 
   @override
@@ -30,6 +33,7 @@ class ExtractoController extends GetxController {
     await Future.wait([
       carregarSaldo(),
       carregarMovimentos(),
+      carregarGrafico(),
     ]);
   }
 
@@ -58,6 +62,20 @@ class ExtractoController extends GetxController {
       erro.value = 'Erro ao carregar movimentos.';
     } finally {
       isLoadingMovimentos.value = false;
+    }
+  }
+
+  Future<void> carregarGrafico() async {
+    isLoadingGrafico.value = true;
+    erro.value = null;
+    try {
+      grafico.value = await _repo.obterGraficoMensal();
+    } on DioException catch (e) {
+      erro.value = _extrairErro(e);
+    } catch (_) {
+      erro.value = 'Erro ao carregar gráfico.';
+    } finally {
+      isLoadingGrafico.value = false;
     }
   }
 

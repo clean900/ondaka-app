@@ -29,11 +29,13 @@ class HomeRouter {
       case 'guarda':
         return AppRoutes.homeGuarda;
 
-      case 'condomino':
       case 'administrador-condominio':
       case 'gestor':
       case 'admin-empresa':
       case 'super-admin':
+        return AppRoutes.homeGestor;
+
+      case 'condomino':
       case null:
       default:
         return AppRoutes.home;

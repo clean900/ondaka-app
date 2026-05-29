@@ -19,7 +19,7 @@ class ExtractoSaldo {
   });
 
   factory ExtractoSaldo.fromJson(Map<String, dynamic> json) {
-    final porTipoRaw = json['por_tipo'] as Map<String, dynamic>? ?? {};
+    final porTipoRaw = json['por_tipo'] is Map ? json['por_tipo'] as Map<String, dynamic> : <String, dynamic>{};
     final porTipo = porTipoRaw.map(
       (k, v) => MapEntry(k, double.tryParse(v.toString()) ?? 0.0),
     );

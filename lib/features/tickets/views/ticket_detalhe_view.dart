@@ -38,7 +38,7 @@ class _TicketDetalheViewState extends State<TicketDetalheView> {
       appBar: AppBar(
         title: Obx(() => Text(controller.ticket.value != null
             ? 'Pedido #${controller.ticket.value!.id}'
-            : 'Pedido')),
+            : 'Pedido de Intervenção')),
       ),
       body: Obx(() {
         if (controller.isLoading.value && controller.ticket.value == null) {
@@ -131,6 +131,78 @@ class _TicketDetalheViewState extends State<TicketDetalheView> {
                     ],
                   ),
                 ),
+                const SizedBox(width: 6),
+                // Badge tipo (particular ou publico)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: t.tipo == TicketTipo.publico
+                        ? Colors.blue.withValues(alpha: 0.15)
+                        : theme.colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(t.tipo.icon, size: 12,
+                          color: t.tipo == TicketTipo.publico
+                              ? Colors.blue
+                              : null),
+                      const SizedBox(width: 4),
+                      Text(t.tipo.label,
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: t.tipo == TicketTipo.publico
+                                  ? Colors.blue
+                                  : null)),
+                    ],
+                  ),
+                ),
+                // Botao Apoiar (so para pedidos publicos)
+                if (t.tipo == TicketTipo.publico) ...[
+                  const Spacer(),
+                  InkWell(
+                    onTap: () => controller.apoiar(),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: t.apoiadoPeloUser
+                            ? Colors.pink.withValues(alpha: 0.15)
+                            : theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: t.apoiadoPeloUser
+                              ? Colors.pink
+                              : theme.colorScheme.outline.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            t.apoiadoPeloUser
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            size: 14,
+                            color: t.apoiadoPeloUser ? Colors.pink : null,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${t.totalApoios}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: t.apoiadoPeloUser ? Colors.pink : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 12),
@@ -158,6 +230,15 @@ class _TicketDetalheViewState extends State<TicketDetalheView> {
             if (t.atribuidoANome != null)
               _linhaInfo(
                   Icons.assignment_ind, 'Atribuído a', t.atribuidoANome!),
+            if (t.atribuidoAEmpresaNome != null)
+              _linhaInfo(
+                  Icons.business, 'Empresa', t.atribuidoAEmpresaNome!),
+            if (t.canceladoEm != null)
+              _linhaInfo(
+                  Icons.cancel, 'Cancelado em', _fmtDateHour(t.canceladoEm!)),
+            if (t.motivoCancelamento != null && t.motivoCancelamento!.isNotEmpty)
+              _linhaInfo(
+                  Icons.info_outline, 'Motivo', t.motivoCancelamento!),
             if (t.resolvidoEm != null)
               _linhaInfo(Icons.check_circle, 'Resolvido em',
                   _fmtDateHour(t.resolvidoEm!)),
@@ -340,7 +421,7 @@ class _TicketDetalheViewState extends State<TicketDetalheView> {
               : const Icon(Icons.cancel_outlined),
           label: Text(controller.isCancelando.value
               ? 'A cancelar...'
-              : 'Cancelar este ticket'),
+              : 'Cancelar este pedido'),
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.red,
             side: const BorderSide(color: Colors.red),
@@ -352,9 +433,9 @@ class _TicketDetalheViewState extends State<TicketDetalheView> {
   void _confirmarCancelar() {
     Get.dialog(
       AlertDialog(
-        title: const Text('Cancelar ticket?'),
+        title: const Text('Cancelar pedido?'),
         content: const Text(
-            'Esta acção não pode ser desfeita. O ticket será marcado como cancelado.'),
+            'Esta acção não pode ser desfeita. O pedido será marcado como cancelado.'),
         actions: [
           TextButton(
             onPressed: () => Get.back(),

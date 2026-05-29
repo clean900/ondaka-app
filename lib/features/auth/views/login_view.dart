@@ -31,7 +31,35 @@ class LoginView extends StatelessWidget {
                   children: [
                     // === Logo ONDAKA ===
                     _buildLogo(),
-                    const SizedBox(height: 48),
+                    const SizedBox(height: 20),
+
+                    // === Nome ONDAKA com gradient ===
+                    Center(
+                      child: ShaderMask(
+                        shaderCallback: (bounds) =>
+                            AppColors.brandGradientHorizontal.createShader(bounds),
+                        child: const Text(
+                          'ONDAKA',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -1,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Gestão de Condomínios',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textMuted,
+                        letterSpacing: 0.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 36),
 
                     // === Título ===
                     Text(
@@ -146,26 +174,24 @@ class LoginView extends StatelessWidget {
 
   Widget _buildLogo() {
     return Container(
-      width: 64,
-      height: 64,
+      width: 88,
+      height: 88,
       decoration: BoxDecoration(
-        gradient: AppColors.brandGradient,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: AppColors.cyan.withValues(alpha: 0.4),
+            color: AppColors.cyan.withValues(alpha: 0.3),
             blurRadius: 30,
           ),
         ],
       ),
-      child: const Center(
-        child: Text(
-          'O',
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.w900,
-            color: Color(0xFF001218),
-          ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: Image.asset(
+          'assets/images/ondaka-logo.png',
+          width: 88,
+          height: 88,
+          fit: BoxFit.contain,
         ),
       ),
     );

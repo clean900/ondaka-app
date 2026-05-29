@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../core/services/api_service.dart';
 import '../models/extracto_saldo.dart';
+import '../models/mes_grafico.dart';
 import '../models/movimento.dart';
 
 /// Repository para o extracto financeiro do condómino.
@@ -32,5 +33,13 @@ class ExtractoRepository {
     );
     final lista = (r.data['data'] as List).cast<Map<String, dynamic>>();
     return lista.map(Movimento.fromJson).toList();
+  }
+
+  /// GET /api/extracto/grafico-mensal
+  /// Devolve 12 entradas mensais (mais antigo → mais recente).
+  Future<List<MesGrafico>> obterGraficoMensal() async {
+    final r = await _dio.get('/extracto/grafico-mensal');
+    final lista = (r.data['data'] as List).cast<Map<String, dynamic>>();
+    return lista.map(MesGrafico.fromJson).toList();
   }
 }

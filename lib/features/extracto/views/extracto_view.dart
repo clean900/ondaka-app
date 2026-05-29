@@ -25,7 +25,7 @@ class ExtractoView extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.bgDark,
       appBar: AppBar(
-        title: const Text('Extracto'),
+        title: const Text('Minhas Taxas de Condomínio'),
         backgroundColor: AppColors.bgDark,
       ),
       body: Obx(() {

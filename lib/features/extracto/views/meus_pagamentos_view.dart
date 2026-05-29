@@ -6,6 +6,8 @@ import '../../../app/theme/app_colors.dart';
 import '../controllers/pagamento_controller.dart';
 import '../models/pagamento.dart';
 import 'pagamento_form_view.dart';
+import 'package:open_file/open_file.dart';
+import '../repositories/pagamento_repository.dart';
 
 /// Lista de pagamentos submetidos pelo condómino.
 class MeusPagamentosView extends StatelessWidget {
@@ -155,6 +157,10 @@ class _PagamentoCard extends StatelessWidget {
                 ),
               ),
             ),
+            if (pagamento.estado == 'confirmado') ...[
+              const SizedBox(height: 10),
+              _BotaoConfirmacaoPdf(pagamentoId: pagamento.id),
+            ],
             if (pagamento.foiRejeitado &&
                 pagamento.motivoRejeicao != null) ...[
               const SizedBox(height: 8),
@@ -216,3 +222,69 @@ class _PagamentoCard extends StatelessWidget {
     }
   }
 }
+
+
+class _BotaoConfirmacaoPdf extends StatefulWidget {
+  const _BotaoConfirmacaoPdf({required this.pagamentoId});
+  final int pagamentoId;
+
+  @override
+  State<_BotaoConfirmacaoPdf> createState() => _BotaoConfirmacaoPdfState();
+}
+
+class _BotaoConfirmacaoPdfState extends State<_BotaoConfirmacaoPdf> {
+  bool _ocupado = false;
+
+  Future<void> _baixar() async {
+    if (_ocupado) return;
+    setState(() => _ocupado = true);
+    try {
+      final caminho =
+          await PagamentoRepository().descarregarConfirmacao(widget.pagamentoId);
+      final res = await OpenFile.open(caminho);
+      if (res.type != ResultType.done && mounted) {
+        Get.snackbar('Aviso', 'Confirmacao descarregada, mas nao foi possivel abrir automaticamente.',
+            backgroundColor: const Color(0xFFF59E0B), colorText: Colors.white);
+      }
+    } catch (_) {
+      if (mounted) {
+        Get.snackbar('Erro', 'Nao foi possivel descarregar a confirmacao.',
+            backgroundColor: const Color(0xFFEF4444), colorText: Colors.white);
+      }
+    } finally {
+      if (mounted) setState(() => _ocupado = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: _ocupado ? null : _baixar,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFF06B6D4).withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFF06B6D4).withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _ocupado
+                ? const SizedBox(
+                    width: 14, height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF06B6D4)))
+                : const Icon(Icons.picture_as_pdf_outlined, color: Color(0xFF06B6D4), size: 16),
+            const SizedBox(width: 8),
+            Text(
+              _ocupado ? 'A descarregar...' : 'Descarregar confirmacao',
+              style: const TextStyle(color: Color(0xFF06B6D4), fontSize: 12, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

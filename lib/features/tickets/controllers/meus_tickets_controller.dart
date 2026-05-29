@@ -70,4 +70,39 @@ class MeusTicketsController extends GetxController {
     if (e.response?.statusCode == 401) return 'Sessão expirada.';
     return e.response?.data?['message'] as String? ?? 'Erro ao carregar.';
   }
+
+  /// Toggle apoio num pedido publico (optimistic update).
+  Future<void> apoiar(int ticketId) async {
+    final idx = tickets.indexWhere((t) => t.id == ticketId);
+    if (idx == -1) return;
+
+    final antes = tickets[idx];
+    if (antes.tipo != TicketTipo.publico) return;
+
+    // Optimistic UI
+    tickets[idx] = antes.copyWith(
+      apoiadoPeloUser: !antes.apoiadoPeloUser,
+      totalApoios: antes.apoiadoPeloUser
+          ? (antes.totalApoios - 1).clamp(0, 999999)
+          : antes.totalApoios + 1,
+    );
+
+    try {
+      final result = await _repo.apoiar(ticketId);
+      // Sincroniza com a resposta real do backend
+      tickets[idx] = tickets[idx].copyWith(
+        apoiadoPeloUser: result['apoiado'] as bool? ?? false,
+        totalApoios: (result['total_apoios'] as num?)?.toInt() ?? 0,
+      );
+    } catch (e) {
+      // Reverte em caso de erro
+      tickets[idx] = antes;
+      Get.snackbar(
+        'Erro',
+        'Nao foi possivel apoiar o pedido.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
 }

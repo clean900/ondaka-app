@@ -15,7 +15,7 @@ class MeusTicketsView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Meus tickets'),
+        title: const Text('Meus Pedidos de Intervenção'),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
@@ -23,7 +23,7 @@ class MeusTicketsView extends StatelessWidget {
           if (criou == true) controller.carregar();
         },
         icon: const Icon(Icons.add),
-        label: const Text('Novo ticket'),
+        label: const Text('Novo Pedido'),
       ),
       body: Column(
         children: [
@@ -99,11 +99,11 @@ class MeusTicketsView extends StatelessWidget {
             Icon(Icons.inbox_outlined,
                 size: 72, color: Theme.of(context).colorScheme.outline),
             const SizedBox(height: 16),
-            Text('Sem tickets ainda.',
+            Text('Sem pedidos de intervenção ainda.',
                 style: Theme.of(context).textTheme.bodyLarge),
             const SizedBox(height: 8),
             Text(
-              'Toca em "Novo ticket" para reportar um problema.',
+              'Toca em "Novo Pedido" para reportar um problema.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall,
             ),
@@ -181,10 +181,29 @@ class _TicketCard extends StatelessWidget {
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.outline,
                       )),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
+                  Icon(
+                    ticket.tipo.icon,
+                    size: 12,
+                    color: ticket.tipo == TicketTipo.publico
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.outline,
+                  ),
+                  const SizedBox(width: 6),
                   _badge(ticket.estado.label, ticket.estado.cor),
                   const SizedBox(width: 6),
                   _badgePequeno(ticket.prioridade.label, ticket.prioridade.cor),
+                  if (ticket.tipo == TicketTipo.publico && ticket.totalApoios > 0) ...[
+                    const SizedBox(width: 6),
+                    Icon(Icons.favorite,
+                        size: 12,
+                        color: ticket.apoiadoPeloUser
+                            ? Colors.pink
+                            : theme.colorScheme.outline),
+                    const SizedBox(width: 2),
+                    Text('${ticket.totalApoios}',
+                        style: theme.textTheme.bodySmall),
+                  ],
                   const Spacer(),
                   if (ticket.fotos.isNotEmpty) ...[
                     Icon(Icons.image,

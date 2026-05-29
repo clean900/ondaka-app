@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
 import 'package:dio/dio.dart';
 
@@ -29,6 +30,7 @@ class PagamentoRepository {
     required String metodo,
     required double valor,
     required DateTime dataPagamento,
+    int? contaBancariaId,
     List<int>? lancamentoIds,
     String? referenciaExterna,
     String? bancoOrigem,
@@ -37,6 +39,7 @@ class PagamentoRepository {
   }) async {
     final formData = FormData.fromMap({
       'fraccao_id': fraccaoId,
+      if (contaBancariaId != null) 'conta_bancaria_id': contaBancariaId,
       'metodo': metodo,
       'valor': valor.toStringAsFixed(2),
       'data_pagamento':
@@ -116,4 +119,17 @@ class PagamentoRepository {
   Future<void> cancelar(int id) async {
     await _dio.delete('/extracto/pagamentos/$id');
   }
+
+  /// Descarrega o PDF de Confirmacao de Pagamento (autenticado) para um
+  /// ficheiro temporario e devolve o caminho local.
+  Future<String> descarregarConfirmacao(int pagamentoId) async {
+    final dir = await getTemporaryDirectory();
+    final destino = '${dir.path}/confirmacao-$pagamentoId.pdf';
+    await _dio.download(
+      '/extracto/pagamentos/$pagamentoId/confirmacao-pdf',
+      destino,
+    );
+    return destino;
+  }
+
 }

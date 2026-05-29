@@ -65,13 +65,20 @@ class TicketRepository {
     return Ticket.fromJson(response.data['data'] as Map<String, dynamic>);
   }
 
-  /// Cria um novo ticket. Suporta fotos opcionais via multipart.
+  /// Cria um novo pedido de intervencao.
+  /// - [tipo]: particular (privado) ou publico (visivel a todos os condominos)
+  /// - [categoriaId]: ID da categoria dinamica (vinda de GET /tickets/categorias)
+  /// - [categoria]: enum legado (fallback se categoriaId nao for fornecido)
+  /// Suporta fotos opcionais via multipart.
   Future<Ticket> criar({
     required int condominioId,
     int? fraccaoId,
     required String titulo,
     required String descricao,
-    required TicketCategoria categoria,
+    TicketTipo tipo = TicketTipo.particular,
+    int? categoriaId,
+    String? categoriaSlug,
+    TicketCategoria? categoria,
     TicketPrioridade prioridade = TicketPrioridade.media,
     List<File> fotos = const [],
   }) async {
@@ -81,7 +88,12 @@ class TicketRepository {
       if (fraccaoId != null) MapEntry('fraccao_id', fraccaoId.toString()),
       MapEntry('titulo', titulo),
       MapEntry('descricao', descricao),
-      MapEntry('categoria', categoria.slug),
+      MapEntry('tipo', tipo.slug),
+      if (categoriaId != null) MapEntry('categoria_id', categoriaId.toString()),
+      if (categoriaSlug != null)
+        MapEntry('categoria', categoriaSlug)
+      else if (categoria != null)
+        MapEntry('categoria', categoria.slug),
       MapEntry('prioridade', prioridade.slug),
     ]);
 
@@ -124,5 +136,39 @@ class TicketRepository {
       data: {if (motivo != null) 'motivo': motivo},
     );
     return Ticket.fromJson(response.data['data'] as Map<String, dynamic>);
+  }
+
+  /// Toggle apoio num pedido publico.
+  /// Devolve {apoiado: bool, total_apoios: int}.
+  Future<Map<String, dynamic>> apoiar(int ticketId) async {
+    final response = await _dio.post('/tickets/$ticketId/apoiar');
+    return response.data as Map<String, dynamic>;
+  }
+
+  /// Atribui o pedido a um user (modo=user), empresa (modo=empresa) ou remove (modo=remover).
+  Future<Ticket> atribuir(
+    int ticketId, {
+    required String modo,
+    int? atribuidoAUserId,
+    int? atribuidoAEmpresaId,
+  }) async {
+    final response = await _dio.patch(
+      '/tickets/$ticketId/atribuir',
+      data: {
+        'modo': modo,
+        if (atribuidoAUserId != null) 'atribuido_a_user_id': atribuidoAUserId,
+        if (atribuidoAEmpresaId != null) 'atribuido_a_empresa_id': atribuidoAEmpresaId,
+      },
+    );
+    return Ticket.fromJson(response.data['data'] as Map<String, dynamic>);
+  }
+
+  /// Lista categorias dinamicas da empresa (para o wizard de criacao).
+  Future<List<TicketCategoriaDinamica>> categorias() async {
+    final response = await _dio.get('/tickets/categorias');
+    final list = response.data['categorias'] as List<dynamic>;
+    return list
+        .map((j) => TicketCategoriaDinamica.fromJson(j as Map<String, dynamic>))
+        .toList();
   }
 }

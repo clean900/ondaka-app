@@ -74,6 +74,38 @@ class TicketDetalheController extends GetxController {
     }
   }
 
+
+  /// Toggle apoio no pedido (apenas para tipo publico).
+  Future<void> apoiar() async {
+    final t = ticket.value;
+    if (t == null || t.tipo != TicketTipo.publico) return;
+
+    // Optimistic update
+    final antes = t;
+    ticket.value = t.copyWith(
+      apoiadoPeloUser: !t.apoiadoPeloUser,
+      totalApoios: t.apoiadoPeloUser
+          ? (t.totalApoios - 1).clamp(0, 999999)
+          : t.totalApoios + 1,
+    );
+
+    try {
+      final result = await _repo.apoiar(ticketId);
+      ticket.value = ticket.value!.copyWith(
+        apoiadoPeloUser: result['apoiado'] as bool? ?? false,
+        totalApoios: (result['total_apoios'] as num?)?.toInt() ?? 0,
+      );
+    } catch (e) {
+      // Reverte
+      ticket.value = antes;
+      Get.snackbar(
+        'Erro',
+        'Nao foi possivel apoiar o pedido.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
   String _erroDio(DioException e) {
     if (e.response?.statusCode == 401) return 'Sessão expirada.';
     if (e.response?.statusCode == 403) return 'Sem permissão.';

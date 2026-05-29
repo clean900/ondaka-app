@@ -35,7 +35,10 @@ class _PagamentoFormViewState extends State<PagamentoFormView> {
   bool _carregandoLancamentos = true;
 
   // Estado do form
-  Map<String, dynamic>? _coordenadas;
+  List<Map<String, dynamic>> _contas = [];
+  int? _contaSeleccionadaId;
+  Map<String, dynamic>? _configFacturacao;
+  bool _contasCarregadas = false;
   Map<String, dynamic>? _referenciaMcxGerada;
   String _metodo = 'transferencia_bancaria';
   DateTime _dataPagamento = DateTime.now();
@@ -46,25 +49,58 @@ class _PagamentoFormViewState extends State<PagamentoFormView> {
   void initState() {
     super.initState();
     _carregarLancamentos();
-    _carregarCoordenadas();
+    _carregarContas();
   }
 
-  Future<void> _carregarCoordenadas() async {
+  Future<void> _carregarContas() async {
     try {
       final r = await ApiService.to.dio
-          .get('/extracto/pagamentos/coordenadas-bancarias');
-      if (mounted && r.data['data'] != null) {
-        setState(() => _coordenadas = r.data['data'] as Map<String, dynamic>);
+          .get('/extracto/pagamentos/contas-disponiveis');
+      final data = r.data['data'];
+      if (mounted && data != null) {
+        final contas = (data['contas'] as List?)
+                ?.map((e) => Map<String, dynamic>.from(e as Map))
+                .toList() ??
+            [];
+        setState(() {
+          _contas = contas;
+          _configFacturacao = data['config'] != null
+              ? Map<String, dynamic>.from(data['config'] as Map)
+              : null;
+          _contasCarregadas = true;
+          // Auto-seleccionar se houver exactamente 1 (Q3=a do desenho)
+          if (_contas.length == 1) {
+            _contaSeleccionadaId = _contas.first['id'] as int;
+          } else if (_contas.isNotEmpty) {
+            // pre-seleccionar a principal, se existir
+            final principal = _contas.firstWhere(
+              (ct) => ct['principal'] == true,
+              orElse: () => _contas.first,
+            );
+            _contaSeleccionadaId = principal['id'] as int;
+          }
+        });
+      } else if (mounted) {
+        setState(() => _contasCarregadas = true);
       }
     } catch (_) {
-      // silenciar — coordenadas opcionais
+      if (mounted) setState(() => _contasCarregadas = true);
+    }
+  }
+
+  Map<String, dynamic>? get _contaActual {
+    if (_contaSeleccionadaId == null) return null;
+    try {
+      return _contas.firstWhere((ct) => ct['id'] == _contaSeleccionadaId);
+    } catch (_) {
+      return null;
     }
   }
 
   Future<void> _copiar(String texto, String label) async {
     await Clipboard.setData(ClipboardData(text: texto));
     if (mounted) {
-      Get.snackbar('Copiado', '\$label copiado para o clipboard.',
+      Get.snackbar('Copiado', '$label copiado para o clipboard.',
           backgroundColor: const Color(0xFF10B981),
           colorText: Colors.white,
           duration: const Duration(seconds: 2));
@@ -169,6 +205,20 @@ class _PagamentoFormViewState extends State<PagamentoFormView> {
       return;
     }
 
+    final exigeConta = _metodo == 'transferencia_bancaria' ||
+        _metodo == 'deposito_bancario';
+    if (exigeConta && _contaSeleccionadaId == null) {
+      Get.snackbar(
+        'Conta em falta',
+        _contas.isEmpty
+            ? 'Este condomínio não tem contas configuradas. Usa Multicaixa Express.'
+            : 'Escolhe a conta para onde vais transferir/depositar.',
+        backgroundColor: const Color(0xFFEF4444),
+        colorText: Colors.white,
+      );
+      return;
+    }
+
     final exigeComprovativo = _metodo == 'transferencia_bancaria' ||
         _metodo == 'deposito_bancario';
     if (exigeComprovativo && _comprovativo == null) {
@@ -189,6 +239,7 @@ class _PagamentoFormViewState extends State<PagamentoFormView> {
       metodo: _metodo,
       valor: _totalSelecionado,
       dataPagamento: _dataPagamento,
+      contaBancariaId: _contaSeleccionadaId,
       lancamentoIds: _lancamentosSelecionados.toList(),
       referenciaExterna: _refExternaController.text.trim().isEmpty
           ? null
@@ -329,11 +380,16 @@ class _PagamentoFormViewState extends State<PagamentoFormView> {
                         ),
                       ),
 
-                      // Coordenadas bancárias (só para transferência/depósito)
-                      if (_coordenadas != null &&
-                          (_metodo == 'transferencia_bancaria' ||
-                              _metodo == 'deposito_bancario'))
-                        _coordenadasCard(),
+                      // Selector de conta + coordenadas (só transferência/depósito)
+                      if (_metodo == 'transferencia_bancaria' ||
+                          _metodo == 'deposito_bancario') ...[
+                        if (_contasCarregadas && _contas.isEmpty)
+                          _avisoSemContas()
+                        else ...[
+                          if (_contas.length > 1) _selectorConta(),
+                          if (_contaActual != null) _coordenadasCard(),
+                        ],
+                      ],
 
                       // Data
                       _seccao(
@@ -620,8 +676,72 @@ class _PagamentoFormViewState extends State<PagamentoFormView> {
     );
   }
 
+  Widget _selectorConta() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+          value: _contaSeleccionadaId,
+          isExpanded: true,
+          dropdownColor: const Color(0xFF16163A),
+          style: const TextStyle(color: Colors.white, fontSize: 14),
+          hint: const Text('Escolhe a conta',
+              style: TextStyle(color: Colors.white54)),
+          items: _contas.map((ct) {
+            return DropdownMenuItem<int>(
+              value: ct['id'] as int,
+              child: Text('${ct['nome']} · ${ct['banco']}',
+                  overflow: TextOverflow.ellipsis),
+            );
+          }).toList(),
+          onChanged: (v) => setState(() => _contaSeleccionadaId = v),
+        ),
+      ),
+    );
+  }
+
+  Widget _avisoSemContas() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.3)),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.warning_amber_rounded,
+              color: Color(0xFFF59E0B), size: 18),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Este condomínio ainda não tem contas configuradas para transferência ou depósito. Usa Multicaixa Express ou contacta a administração.',
+              style: TextStyle(color: Colors.white70, fontSize: 12, height: 1.4),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _coordenadasCard() {
-    final c = _coordenadas!;
+    final conta = _contaActual!;
+    final c = {
+      'banco_nome': conta['banco'],
+      'titular_conta': conta['nome'],
+      'iban': conta['iban'],
+      'numero_conta': conta['iban'],
+      'nif_emissor': _configFacturacao?['nif_emissor'],
+      'observacoes_facturacao':
+          conta['instrucoes_pagamento'] ?? _configFacturacao?['observacoes_facturacao'],
+    };
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),

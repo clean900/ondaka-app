@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import '../../pre_aprovacoes/views/historico_visitas_view.dart';
 import '../repositories/portaria_repository.dart';
 import 'portaria_encomendas_shell_view.dart';
+import '../../sos_guarda/views/sos_guarda_lista_view.dart';
+import '../../sos_guarda/repositories/sos_guarda_repository.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
@@ -66,6 +68,10 @@ class HomeGuardaView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 32),
+
+                // === Card SOS (PRIORIDADE MÁXIMA) ===
+                _SosGuardaCard(),
+                const SizedBox(height: 14),
 
                 // Botão principal — validar OTP
                 _accaoGrande(
@@ -261,3 +267,131 @@ class HomeGuardaView extends StatelessWidget {
     }
   }
 }
+
+// ============================================================================
+// CARD SOS — destaca alertas em curso para o guarda
+// ============================================================================
+class _SosGuardaCard extends StatefulWidget {
+  @override
+  State<_SosGuardaCard> createState() => _SosGuardaCardState();
+}
+
+class _SosGuardaCardState extends State<_SosGuardaCard> {
+  final _repo = SosGuardaRepository();
+  int _abertos = 0;
+  int _criticos = 0;
+  bool _carregado = false;
+  late final Stream<int> _polling = Stream.periodic(const Duration(seconds: 30), (i) => i);
+
+  @override
+  void initState() {
+    super.initState();
+    _carregar();
+    _polling.listen((_) => _carregar());
+  }
+
+  Future<void> _carregar() async {
+    try {
+      final lista = await _repo.meusAlertas();
+      if (!mounted) return;
+      setState(() {
+        _abertos = lista.where((a) => a.estado == 'aberto').length;
+        _criticos = lista.where((a) => a.estado == 'aberto' && a.gravidade == 'critico').length;
+        _carregado = true;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _carregado = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasAlertas = _abertos > 0;
+    final hasCriticos = _criticos > 0;
+    final cor = hasCriticos ? AppColors.danger : (hasAlertas ? AppColors.warning : AppColors.success);
+
+    return InkWell(
+      onTap: () async {
+        await Get.to(() => const SosGuardaListaView());
+        _carregar();
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: hasAlertas
+              ? LinearGradient(
+                  colors: [cor.withValues(alpha: 0.25), cor.withValues(alpha: 0.10)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: hasAlertas ? null : AppColors.surface.withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: cor.withValues(alpha: hasAlertas ? 0.5 : 0.2), width: 1.2),
+          boxShadow: hasCriticos
+              ? [BoxShadow(color: cor.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 4))]
+              : null,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: cor.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                hasAlertas ? Icons.warning_amber : Icons.shield_outlined,
+                color: cor,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Emergências SOS',
+                    style: TextStyle(color: AppColors.textMain, fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    !_carregado
+                        ? 'A carregar…'
+                        : hasCriticos
+                            ? '$_criticos crítico${_criticos > 1 ? "s" : ""} em curso · TOQUE PARA AGIR'
+                            : hasAlertas
+                                ? '$_abertos alerta${_abertos > 1 ? "s" : ""} em curso'
+                                : 'Nenhum alerta. Tudo calmo.',
+                    style: TextStyle(
+                      color: hasAlertas ? cor : AppColors.textMuted,
+                      fontSize: 12,
+                      fontWeight: hasCriticos ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (hasAlertas)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: cor,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '$_abertos',
+                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
