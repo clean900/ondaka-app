@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -12,6 +13,15 @@ class PushNotificationService extends GetxService {
   static PushNotificationService get to => Get.find();
 
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  final FlutterLocalNotificationsPlugin _localNotif = FlutterLocalNotificationsPlugin();
+  bool _localNotifPronto = false;
+
+  static const AndroidNotificationChannel _canal = AndroidNotificationChannel(
+    'ondaka_default',
+    'Notificações ONDAKA',
+    description: 'Avisos, pedidos e alertas do condomínio',
+    importance: Importance.max,
+  );
 
   String? _fcmToken;
   String? get fcmToken => _fcmToken;
@@ -22,8 +32,51 @@ class PushNotificationService extends GetxService {
     _setup();
   }
 
+  Future<void> _initLocalNotifications() async {
+    if (_localNotifPronto) return;
+    const initSettings = InitializationSettings(
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      iOS: DarwinInitializationSettings(),
+    );
+    await _localNotif.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: (resp) {
+        final payload = resp.payload;
+        if (payload != null && payload.isNotEmpty) {
+          debugPrint('[Push] Notificação local tocada: \$payload');
+        }
+      },
+    );
+    await _localNotif
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(_canal);
+    _localNotifPronto = true;
+  }
+
+  void _mostrarNotificacaoLocal(RemoteMessage message) {
+    final n = message.notification;
+    if (n == null) return;
+    _localNotif.show(
+      n.hashCode,
+      n.title,
+      n.body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _canal.id,
+          _canal.name,
+          channelDescription: _canal.description,
+          importance: Importance.max,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+        ),
+        iOS: const DarwinNotificationDetails(),
+      ),
+    );
+  }
+
   Future<void> _setup() async {
     try {
+      await _initLocalNotifications();
       final settings = await _messaging.requestPermission(
         alert: true,
         badge: true,
@@ -52,6 +105,7 @@ class PushNotificationService extends GetxService {
 
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         debugPrint('[Push] Mensagem recebida (foreground): ${message.notification?.title}');
+        _mostrarNotificacaoLocal(message);
         _mostrarSnackbar(message);
       });
 
