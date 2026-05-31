@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import 'api_service.dart';
 import 'storage_service.dart';
+import '../../features/avisos/views/aviso_detalhe_view.dart';
 
 /// Serviço para gerir push notifications via Firebase Cloud Messaging.
 class PushNotificationService extends GetxService {
@@ -56,9 +57,19 @@ class PushNotificationService extends GetxService {
 
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
         debugPrint('[Push] App aberta via notificação: ${message.data}');
+        _abrirDestino(message);
       });
     } catch (e) {
       debugPrint('[Push] Erro setup: $e');
+    }
+  }
+
+  void _abrirDestino(RemoteMessage message) {
+    final data = message.data;
+    final tipo = data['tipo']?.toString();
+    final avisoId = int.tryParse(data['aviso_id']?.toString() ?? '');
+    if (tipo == 'aviso_publicado' && avisoId != null) {
+      Get.to(() => AvisoDetalheView(avisoId: avisoId));
     }
   }
 
