@@ -285,7 +285,7 @@ class _TicketDetalheViewState extends State<TicketDetalheView> {
             ),
             clipBehavior: Clip.antiAlias,
             child: Image.network(
-              'https://ondaka.ao/storage/${foto.path}',
+              'https://ondaka.ao/ficheiros/${foto.path}',
               fit: BoxFit.cover,
               errorBuilder: (_, _, _) =>
                   const Icon(Icons.image_not_supported),

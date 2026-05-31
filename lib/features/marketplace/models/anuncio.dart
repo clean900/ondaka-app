@@ -45,7 +45,7 @@ class AnuncioFoto {
     if (url != null && url!.isNotEmpty) return url!;
     if (path.startsWith('http')) return path;
     final b = baseUrl.replaceAll('/api', '');
-    return '$b/storage/$path';
+    return '$b/ficheiros/$path';
   }
 }
 

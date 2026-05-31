@@ -227,7 +227,7 @@ class _AssembleiaDetalheViewState extends State<AssembleiaDetalheView> {
   Widget _botaoActa(AssembleiaDetalhe d) {
     return OutlinedButton.icon(
       onPressed: () async {
-        final url = 'https://ondaka.ao/storage/${d.assembleia.actaPath}';
+        final url = 'https://ondaka.ao/ficheiros/${d.assembleia.actaPath}';
         final uri = Uri.parse(url);
         if (await canLaunchUrl(uri)) {
           await launchUrl(uri, mode: LaunchMode.externalApplication);

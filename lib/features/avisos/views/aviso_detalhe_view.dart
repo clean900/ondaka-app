@@ -210,7 +210,7 @@ class _AvisoDetalheViewState extends State<AvisoDetalheView> {
 
   Widget _anexoTile(AvisoAnexo anexo) {
     final theme = Theme.of(context);
-    final url = 'https://ondaka.ao/storage/${anexo.path}';
+    final url = 'https://ondaka.ao/ficheiros/${anexo.path}';
     return InkWell(
       onTap: () async {
         final uri = Uri.parse(url);
