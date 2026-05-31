@@ -103,7 +103,7 @@ class _MainShellViewState extends State<MainShellView>
           backgroundColor: AppColors.surface,
           indicatorColor: AppColors.cyan.withValues(alpha: 0.18),
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          destinations: const [
+          destinations: [
             NavigationDestination(
               icon: Icon(Icons.home_outlined),
               selectedIcon: Icon(Icons.home, color: AppColors.cyan),
@@ -115,8 +115,18 @@ class _MainShellViewState extends State<MainShellView>
               label: 'Visitas',
             ),
             NavigationDestination(
-              icon: Icon(Icons.campaign_outlined),
-              selectedIcon: Icon(Icons.campaign, color: AppColors.cyan),
+              icon: controller.avisosNaoLidos.value > 0
+                  ? Badge(
+                      label: Text('${controller.avisosNaoLidos.value}'),
+                      child: const Icon(Icons.campaign_outlined),
+                    )
+                  : const Icon(Icons.campaign_outlined),
+              selectedIcon: controller.avisosNaoLidos.value > 0
+                  ? Badge(
+                      label: Text('${controller.avisosNaoLidos.value}'),
+                      child: const Icon(Icons.campaign, color: AppColors.cyan),
+                    )
+                  : const Icon(Icons.campaign, color: AppColors.cyan),
               label: 'Avisos',
             ),
             NavigationDestination(
