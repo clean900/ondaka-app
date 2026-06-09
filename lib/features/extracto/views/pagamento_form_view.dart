@@ -737,7 +737,7 @@ class _PagamentoFormViewState extends State<PagamentoFormView> {
       'banco_nome': conta['banco'],
       'titular_conta': conta['nome'],
       'iban': conta['iban'],
-      'numero_conta': conta['iban'],
+      'numero_conta': conta['numero_conta'],
       'nif_emissor': _configFacturacao?['nif_emissor'],
       'observacoes_facturacao':
           conta['instrucoes_pagamento'] ?? _configFacturacao?['observacoes_facturacao'],
