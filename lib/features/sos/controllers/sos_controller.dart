@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -106,10 +107,12 @@ class SosController extends GetxController {
     isEnviando.value = true;
     erro.value = null;
     try {
+      // Junta o GPS (se disponível) — nunca bloqueia a emergência.
+      final localizacaoFinal = await _comGps(localizacao);
       final alerta = await _sosRepo.criarAlerta(
         tipo: tipo,
         descricao: descricao,
-        localizacao: localizacao,
+        localizacao: localizacaoFinal,
         fotos: fotos.toList(),
       );
       ultimoAlerta.value = alerta;
@@ -136,6 +139,44 @@ class SosController extends GetxController {
     final f = fraccaoActiva.value;
     if (f == null) return '';
     return f.labelCompleto;
+  }
+
+  /// Junta um link de mapa GPS ao texto de localização, se conseguir coordenadas.
+  /// Nunca bloqueia o envio: em caso de falha devolve o texto original.
+  /// O backend já aceita `localizacao` (max 255); o gestor/guarda abre o link.
+  Future<String?> _comGps(String? base) async {
+    final pos = await _obterPosicao();
+    if (pos == null) return base;
+    final link =
+        'https://www.google.com/maps?q=${pos.latitude},${pos.longitude}';
+    if (base == null || base.trim().isEmpty) return link;
+    final combinado = '${base.trim()} · 📍 $link';
+    return combinado.length <= 255 ? combinado : link;
+  }
+
+  /// Tenta obter a posição GPS atual com timeout curto (emergência → rápido).
+  /// Devolve null se o serviço estiver desligado, sem permissão, ou em timeout.
+  Future<Position?> _obterPosicao() async {
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) return null;
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.denied ||
+          perm == LocationPermission.deniedForever) {
+        return null;
+      }
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 6),
+        ),
+      );
+    } catch (_) {
+      // Timeout, serviço indisponível, etc. — segue sem GPS.
+      return null;
+    }
   }
 
   String _extrairErro(DioException e) {

@@ -7,7 +7,6 @@ import '../../../app/theme/app_colors.dart';
 import '../controllers/sos_controller.dart';
 import '../models/tipo_sos.dart';
 import 'sos_detalhe_view.dart';
-import 'sos_historico_view.dart';
 
 /// Bottomsheet de SOS — fluxo completo de envio de alerta.
 ///
