@@ -36,6 +36,7 @@ class HomeRouter {
         return AppRoutes.homeGestor;
 
       case 'condomino':
+      case 'familiar':
       case null:
       default:
         return AppRoutes.home;

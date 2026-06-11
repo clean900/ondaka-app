@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../app/theme/app_colors.dart';
+import '../../../app/routes/app_routes.dart';
+import '../../../core/services/auth_service.dart';
+import '../../../core/services/storage_service.dart';
 import '../controllers/perfil_controller.dart';
 import '../models/perfil.dart';
+import '../repositories/perfil_repository.dart';
 
 /// Ecra do perfil do user logado.
 /// Tem 2 tabs: Dados pessoais + Alterar password.
@@ -238,11 +242,71 @@ class _PerfilViewState extends State<PerfilView>
                   minimumSize: const Size.fromHeight(48),
                 ),
               )),
+
+              const SizedBox(height: 32),
+              const Divider(color: AppColors.border),
+              const SizedBox(height: 12),
+              const Text(
+                'Zona de perigo',
+                style: TextStyle(color: AppColors.danger, fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: _confirmarApagarConta,
+                icon: const Icon(Icons.delete_forever, color: AppColors.danger),
+                label: const Text('Apagar a minha conta', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.w500)),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppColors.danger),
+                  minimumSize: const Size.fromHeight(48),
+                ),
+              ),
             ],
           ),
         ),
       ],
     );
+  }
+
+  void _confirmarApagarConta() {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Apagar conta?', style: TextStyle(color: AppColors.textMain)),
+        content: const Text(
+          'Esta acção marca a sua conta para eliminação. Vai perder o acesso à app e aos seus dados.\n\n'
+          'Tem 30 dias para recuperar a conta contactando o suporte. Após esse prazo, a eliminação é definitiva.\n\n'
+          'Se for titular, os membros da sua família também perdem o acesso.',
+          style: TextStyle(color: AppColors.textMuted, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              await _apagarConta();
+            },
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            child: const Text('Apagar definitivamente'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _apagarConta() async {
+    try {
+      final msg = await PerfilRepository().apagarConta();
+      await AuthService.to.logout();
+      await StorageService.to.clearAll();
+      Get.offAllNamed(AppRoutes.login);
+      Get.snackbar('Conta apagada', msg, snackPosition: SnackPosition.BOTTOM);
+    } catch (e) {
+      Get.snackbar('Erro', 'Não foi possível apagar a conta. Tente novamente.', snackPosition: SnackPosition.BOTTOM);
+    }
   }
 
   Widget _buildTabPassword(Perfil perfil) {

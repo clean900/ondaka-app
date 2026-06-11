@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'sem_acesso_view.dart';
 import 'package:get/get.dart';
 
 import '../../../app/theme/app_colors.dart';
@@ -6,9 +7,8 @@ import '../../../core/services/auth_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../avisos/views/meus_avisos_view.dart';
 import '../../chatbot/views/chatbot_bottomsheet.dart';
-import '../../sos/views/sos_bottomsheet.dart';
+import '../../sos/views/sos_view.dart';
 import '../../home/views/home_view.dart';
-import '../../suporte/views/suporte_view.dart';
 import '../../pre_aprovacoes/views/visitas_shell_view.dart';
 import '../controllers/main_shell_controller.dart';
 import 'mais_view.dart';
@@ -34,6 +34,8 @@ class _MainShellViewState extends State<MainShellView>
     WidgetsBinding.instance.addObserver(this);
     // Refresh dados do user ao abrir a app (corrige Bug B-USER-01)
     AuthService.to.fetchUser();
+    // Garante que os acessos do familiar estao carregados ao abrir o shell
+    AuthService.to.carregarRole();
   }
 
   @override
@@ -55,9 +57,9 @@ class _MainShellViewState extends State<MainShellView>
   Widget build(BuildContext context) {
     final tabs = [
       const HomeView(),
-      const VisitasShellView(),
-      const MeusAvisosView(),
-      const SuporteView(),
+      const GateAcesso(acesso: 'visitas', child: VisitasShellView()),
+      const SosView(),
+      const GateAcesso(acesso: 'avisos', child: MeusAvisosView()),
       const MaisView(),
     ];
 
@@ -79,23 +81,14 @@ class _MainShellViewState extends State<MainShellView>
           ),
         ],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _SosFab(onPressed: () => SosBottomsheet.abrir(context)),
-            _ChatbotFab(
-              onPressed: () async {
-                final user = await StorageService.to.getUser();
-                if (!context.mounted) return;
-                ChatbotBottomsheet.abrir(context, userName: user['name']);
-              },
-            ),
-          ],
-        ),
+      floatingActionButton: _ChatbotFab(
+        onPressed: () async {
+          final user = await StorageService.to.getUser();
+          if (!context.mounted) return;
+          ChatbotBottomsheet.abrir(context, userName: user['name']);
+        },
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: Obx(
         () => NavigationBar(
           selectedIndex: controller.tabIndex.value,
@@ -114,6 +107,26 @@ class _MainShellViewState extends State<MainShellView>
               selectedIcon: Icon(Icons.people, color: AppColors.cyan),
               label: 'Visitas',
             ),
+            // SOS ao centro — destacado (emergencia)
+            NavigationDestination(
+              icon: Container(
+                width: 44,
+                height: 44,
+                decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.danger),
+                child: const Icon(Icons.emergency_outlined, color: Colors.white, size: 24),
+              ),
+              selectedIcon: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.danger,
+                  boxShadow: [BoxShadow(color: AppColors.danger.withValues(alpha: 0.5), blurRadius: 12, spreadRadius: 2)],
+                ),
+                child: const Icon(Icons.emergency, color: Colors.white, size: 24),
+              ),
+              label: 'SOS',
+            ),
             NavigationDestination(
               icon: controller.avisosNaoLidos.value > 0
                   ? Badge(
@@ -128,11 +141,6 @@ class _MainShellViewState extends State<MainShellView>
                     )
                   : const Icon(Icons.campaign, color: AppColors.cyan),
               label: 'Avisos',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.support_agent_outlined),
-              selectedIcon: Icon(Icons.support_agent, color: AppColors.cyan),
-              label: 'Suporte',
             ),
             NavigationDestination(
               icon: Icon(Icons.menu_outlined),

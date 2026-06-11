@@ -38,11 +38,21 @@ class LoginController extends GetxController {
 
   String? validateEmail(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Email obrigatório';
+      return 'Indique o email ou telemóvel';
     }
-    final emailRegex = RegExp(r'^[\w.\-]+@[\w.\-]+\.\w+$');
-    if (!emailRegex.hasMatch(value.trim())) {
-      return 'Email inválido';
+    final v = value.trim();
+    final pareceEmail = v.contains('@');
+    if (pareceEmail) {
+      final emailRegex = RegExp(r'^[\w.\-]+@[\w.\-]+\.\w+$');
+      if (!emailRegex.hasMatch(v)) {
+        return 'Email inválido';
+      }
+    } else {
+      // telemovel: pelo menos 9 digitos
+      final digitos = v.replaceAll(RegExp(r'\D+'), '');
+      if (digitos.length < 9) {
+        return 'Telemóvel inválido';
+      }
     }
     return null;
   }

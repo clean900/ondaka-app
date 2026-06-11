@@ -24,6 +24,7 @@ class StorageService extends GetxService {
   static const _keyUserName = 'user_name';
   static const _keyUserRole = 'user_role';
   static const _keyEmpresaId = 'empresa_gestora_id';
+  static const _keyCondominioNome = 'condominio_nome';
 
   // === Token ===
 
@@ -38,17 +39,19 @@ class StorageService extends GetxService {
 
   Future<void> saveUser({
     required int id,
-    required String email,
+    String? email,
     required String name,
     required String role,
-    required int empresaGestoraId,
+    int? empresaGestoraId,
+    String? condominioNome,
   }) async {
     await Future.wait([
       _storage.write(key: _keyUserId, value: id.toString()),
-      _storage.write(key: _keyUserEmail, value: email),
+      _storage.write(key: _keyUserEmail, value: email ?? ''),
       _storage.write(key: _keyUserName, value: name),
       _storage.write(key: _keyUserRole, value: role),
-      _storage.write(key: _keyEmpresaId, value: empresaGestoraId.toString()),
+      _storage.write(key: _keyEmpresaId, value: empresaGestoraId?.toString() ?? ''),
+      _storage.write(key: _keyCondominioNome, value: condominioNome ?? ''),
     ]);
   }
 
@@ -59,6 +62,7 @@ class StorageService extends GetxService {
       _storage.read(key: _keyUserName),
       _storage.read(key: _keyUserRole),
       _storage.read(key: _keyEmpresaId),
+      _storage.read(key: _keyCondominioNome),
     ]);
     return {
       'id': results[0],
@@ -66,6 +70,7 @@ class StorageService extends GetxService {
       'name': results[2],
       'role': results[3],
       'empresa_gestora_id': results[4],
+      'condominio_nome': results[5],
     };
   }
 

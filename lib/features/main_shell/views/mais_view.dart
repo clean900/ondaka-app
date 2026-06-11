@@ -10,7 +10,9 @@ import '../../encomendas/views/encomendas_shell_view.dart';
 import '../../prestadores/views/prestadores_view.dart';
 import '../../marketplace/views/marketplace_view.dart';
 import '../../extracto/views/extracto_view.dart';
+import '../../acordos/views/acordos_view.dart';
 import '../../faqs/views/faqs_view.dart';
+import '../../suporte/views/suporte_view.dart';
 import '../../admin_chatbot_faqs/views/admin_chatbot_faqs_page.dart';
 import '../../conheca/views/conheca_view.dart';
 import '../../sos/views/sos_historico_view.dart';
@@ -19,10 +21,9 @@ import '../../tickets/views/meus_tickets_view.dart';
 import '../../equipa/views/equipa_view.dart';
 import '../../perfil/views/perfil_view.dart';
 import '../../reservas/views/reservas_view.dart';
-// import '../../checklist/views/checklist_lista_view.dart'; // RH/Turnos - fase futura
+import '../../familiares/views/familiares_view.dart';
 
-/// Tab "Mais" — itens secundários acessíveis em lista.
-/// Tickets, Assembleias, Minhas ordens, FAQs, Sair.
+/// Tab "Mais" — grelha de cartoes com as funcionalidades secundarias.
 class MaisView extends StatelessWidget {
   const MaisView({super.key});
 
@@ -31,132 +32,171 @@ class MaisView extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.bgDark,
       appBar: AppBar(title: const Text('Mais')),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        children: [
-          _MaisItem(
+      body: Builder(builder: (context) {
+        final auth = AuthService.to;
+        bool pode(String acesso) => !auth.isFamiliar || auth.acessos.contains(acesso);
+        final ehFamiliar = auth.isFamiliar;
+
+        final cards = <Widget>[
+          _MaisCard(
             icon: Icons.account_circle_outlined,
             cor: AppColors.cyan,
             titulo: 'Meu Perfil',
-            subtitulo: 'Dados pessoais e password',
+            subtitulo: 'Dados e password',
             onTap: () => Get.to(() => const PerfilView()),
           ),
-          _MaisItem(
-            icon: Icons.inventory_2_outlined,
-            cor: AppColors.purple,
-            titulo: 'Encomendas',
-            subtitulo: 'Pré-anunciar e levantar encomendas',
-            onTap: () => Get.to(() => const EncomendasShellView()),
-          ),
-          _MaisItem(
-            icon: Icons.storefront_outlined,
-            cor: AppColors.cyan,
-            titulo: 'Marketplace',
-            subtitulo: 'Compra e venda entre vizinhos',
-            onTap: () => Get.to(() => const MarketplaceView()),
-          ),
-          _MaisItem(
-            icon: Icons.handyman_outlined,
-            cor: AppColors.pink,
-            titulo: 'Serviços',
-            subtitulo: 'Encontrar canalizadores, electricistas e mais',
-            onTap: () => Get.to(() => const PrestadoresView()),
-          ),
-          _MaisItem(
-            icon: Icons.event_available_outlined,
-            cor: AppColors.cyan,
-            titulo: 'Reservas',
-            subtitulo: 'Reservar salão, churrasqueira, ginásio',
-            onTap: () => Get.to(() => const ReservasView()),
-          ),
-          _MaisItem(
-            icon: Icons.account_balance_wallet_outlined,
-            cor: AppColors.cyan,
-            titulo: 'Minhas Taxas de Condomínio',
-            subtitulo: 'Valores a pagar e pagamentos efectuados',
-            onTap: () => Get.to(() => const ExtractoView()),
-          ),
-          _MaisItem(
-            icon: Icons.confirmation_number_outlined,
-            cor: AppColors.cyan,
-            titulo: 'Pedidos de Intervenção',
-            subtitulo: 'Reportar problemas e ver os meus pedidos',
-            onTap: () => Get.to(() => const MeusTicketsView()),
-          ),
-          _MaisItem(
-            icon: Icons.people_outline,
-            cor: AppColors.pink,
-            titulo: 'Equipa do Condomínio',
-            subtitulo: 'Administradores, gestores, funcionários e prestadores',
-            onTap: () => Get.to(() => const EquipaView()),
-          ),
-          // === Checklists — escondido (RH/Turnos, fase futura) ===
-          // _MaisItem(
-          //   icon: Icons.checklist_rtl,
-          //   cor: AppColors.success,
-          //   titulo: 'Checklists',
-          //   subtitulo: 'Rondas, inspecções e verificações',
-          //   onTap: () => Get.to(() => const ChecklistListaView()),
-          // ),
-          _MaisItem(
-            icon: Icons.groups_outlined,
-            cor: AppColors.info,
-            titulo: 'Assembleias',
-            subtitulo: 'Convocatórias, votações e actas',
-            onTap: () => Get.to(() => const MinhasAssembleiasView()),
-          ),
-          _MaisItem(
-            icon: Icons.receipt_long_outlined,
-            cor: AppColors.purple,
-            titulo: 'Minhas ordens',
-            subtitulo: 'Facturas e pagamentos',
-            onTap: () => Get.to(() => const MinhasOrdensView()),
-          ),
-          _MaisItem(
+          if (!ehFamiliar)
+            _MaisCard(
+              icon: Icons.family_restroom,
+              cor: AppColors.cyan,
+              titulo: 'Família',
+              subtitulo: 'Gerir familiares',
+              onTap: () => Get.to(() => const FamiliaresView()),
+            ),
+          if (pode('portaria'))
+            _MaisCard(
+              icon: Icons.inventory_2_outlined,
+              cor: AppColors.purple,
+              titulo: 'Encomendas',
+              subtitulo: 'Pré-anunciar',
+              onTap: () => Get.to(() => const EncomendasShellView()),
+            ),
+          if (pode('marketplace'))
+            _MaisCard(
+              icon: Icons.storefront_outlined,
+              cor: AppColors.cyan,
+              titulo: 'Marketplace',
+              subtitulo: 'Entre vizinhos',
+              onTap: () => Get.to(() => const MarketplaceView()),
+            ),
+          if (pode('marketplace'))
+            _MaisCard(
+              icon: Icons.handyman_outlined,
+              cor: AppColors.pink,
+              titulo: 'Serviços',
+              subtitulo: 'Prestadores',
+              onTap: () => Get.to(() => const PrestadoresView()),
+            ),
+          if (pode('reservas'))
+            _MaisCard(
+              icon: Icons.event_available_outlined,
+              cor: AppColors.cyan,
+              titulo: 'Reservas',
+              subtitulo: 'Salão, ginásio',
+              onTap: () => Get.to(() => const ReservasView()),
+            ),
+          if (!ehFamiliar)
+            _MaisCard(
+              icon: Icons.account_balance_wallet_outlined,
+              cor: AppColors.cyan,
+              titulo: 'Taxas',
+              subtitulo: 'Valores e pagamentos',
+              onTap: () => Get.to(() => const ExtractoView()),
+            ),
+          if (!ehFamiliar)
+            _MaisCard(
+              icon: Icons.handshake_outlined,
+              cor: AppColors.purple,
+              titulo: 'Acordo',
+              subtitulo: 'Plano de pagamento',
+              onTap: () => Get.to(() => const AcordosView()),
+            ),
+          if (pode('pedidos'))
+            _MaisCard(
+              icon: Icons.confirmation_number_outlined,
+              cor: AppColors.cyan,
+              titulo: 'Pedidos',
+              subtitulo: 'Reportar problemas',
+              onTap: () => Get.to(() => const MeusTicketsView()),
+            ),
+          if (pode('equipa'))
+            _MaisCard(
+              icon: Icons.people_outline,
+              cor: AppColors.pink,
+              titulo: 'Equipa',
+              subtitulo: 'Do condomínio',
+              onTap: () => Get.to(() => const EquipaView()),
+            ),
+          if (pode('avisos'))
+            _MaisCard(
+              icon: Icons.groups_outlined,
+              cor: AppColors.info,
+              titulo: 'Assembleias',
+              subtitulo: 'Convocatórias, actas',
+              onTap: () => Get.to(() => const MinhasAssembleiasView()),
+            ),
+          if (!ehFamiliar)
+            _MaisCard(
+              icon: Icons.receipt_long_outlined,
+              cor: AppColors.purple,
+              titulo: 'Minhas ordens',
+              subtitulo: 'Facturas',
+              onTap: () => Get.to(() => const MinhasOrdensView()),
+            ),
+          _MaisCard(
             icon: Icons.help_outline,
             cor: AppColors.warning,
             titulo: 'FAQs',
             subtitulo: 'Perguntas frequentes',
             onTap: () => Get.to(() => const FaqsView()),
           ),
-          _MaisItem(
-            icon: Icons.chat_bubble_outline,
-            cor: AppColors.cyan,
-            titulo: 'FAQs do Chatbot',
-            subtitulo: 'Gerir FAQs do condomínio (admin)',
-            onTap: () => Get.to(() => const AdminChatbotFaqsPage()),
+          _MaisCard(
+            icon: Icons.support_agent_outlined,
+            cor: AppColors.info,
+            titulo: 'Suporte',
+            subtitulo: 'Contactar gestão',
+            onTap: () => Get.to(() => const SuporteView()),
           ),
-          _MaisItem(
+          if (!ehFamiliar)
+            _MaisCard(
+              icon: Icons.chat_bubble_outline,
+              cor: AppColors.cyan,
+              titulo: 'FAQs Chatbot',
+              subtitulo: 'Gerir (admin)',
+              onTap: () => Get.to(() => const AdminChatbotFaqsPage()),
+            ),
+          _MaisCard(
             icon: Icons.auto_awesome_outlined,
             cor: AppColors.pink,
-            titulo: 'Conheça a ONDAKA',
-            subtitulo: 'Catálogo de funcionalidades da plataforma',
+            titulo: 'Conheça',
+            subtitulo: 'A ONDAKA',
             onTap: () => Get.to(() => const ConhecaView()),
           ),
-          _MaisItem(
-            icon: Icons.emergency_outlined,
-            cor: AppColors.danger,
-            titulo: 'Meus alertas SOS',
-            subtitulo: 'Histórico de emergências reportadas',
-            onTap: () => Get.to(() => const SosHistoricoView()),
-          ),
+          if (pode('sos'))
+            _MaisCard(
+              icon: Icons.emergency_outlined,
+              cor: AppColors.danger,
+              titulo: 'Alertas SOS',
+              subtitulo: 'Histórico',
+              onTap: () => Get.to(() => const SosHistoricoView()),
+            ),
+        ];
 
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: Divider(color: AppColors.border, height: 1),
-          ),
-
-          _MaisItem(
-            icon: Icons.logout,
-            cor: AppColors.danger,
-            titulo: 'Sair',
-            subtitulo: 'Terminar sessão',
-            onTap: () => _confirmLogout(context),
-          ),
-
-          const SizedBox(height: 24),
-        ],
-      ),
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          children: [
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 1.15,
+              children: cards,
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: () => _confirmLogout(context),
+              icon: const Icon(Icons.logout, color: AppColors.danger),
+              label: const Text('Sair', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.w500)),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: AppColors.border),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+            ),
+          ],
+        );
+      }),
     );
   }
 
@@ -164,8 +204,9 @@ class MaisView extends StatelessWidget {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Terminar sessão?'),
-        content: const Text('Vais ter de iniciar sessão novamente.'),
+        backgroundColor: AppColors.surface,
+        title: const Text('Terminar sessão?', style: TextStyle(color: AppColors.textMain)),
+        content: const Text('Vais ter de iniciar sessão novamente.', style: TextStyle(color: AppColors.textMuted)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
@@ -186,14 +227,14 @@ class MaisView extends StatelessWidget {
   }
 }
 
-class _MaisItem extends StatelessWidget {
+class _MaisCard extends StatelessWidget {
   final IconData icon;
   final Color cor;
   final String titulo;
   final String subtitulo;
   final VoidCallback onTap;
 
-  const _MaisItem({
+  const _MaisCard({
     required this.icon,
     required this.cor,
     required this.titulo,
@@ -203,34 +244,46 @@ class _MaisItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
+    return InkWell(
       onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-      leading: Container(
-        width: 40,
-        height: 40,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
         decoration: BoxDecoration(
-          color: cor.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(10),
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border, width: 0.5),
         ),
-        child: Icon(icon, color: cor, size: 22),
-      ),
-      title: Text(
-        titulo,
-        style: const TextStyle(
-          color: AppColors.textMain,
-          fontSize: 15,
-          fontWeight: FontWeight.w500,
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: cor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(13),
+              ),
+              child: Icon(icon, color: cor, size: 24),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              titulo,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: AppColors.textMain, fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitulo,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+            ),
+          ],
         ),
-      ),
-      subtitle: Text(
-        subtitulo,
-        style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
-      ),
-      trailing: const Icon(
-        Icons.chevron_right,
-        color: AppColors.textFaint,
-        size: 20,
       ),
     );
   }

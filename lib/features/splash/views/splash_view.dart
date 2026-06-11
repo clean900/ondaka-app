@@ -53,6 +53,9 @@ class _SplashViewState extends State<SplashView> {
       return false;
     }
 
+    // Carregar o role para memoria (regra de acesso, ex.: familiar nao ve dinheiro)
+    await AuthService.to.carregarRole();
+
     return true;
   }
 

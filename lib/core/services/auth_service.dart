@@ -32,6 +32,41 @@ class AuthService extends GetxService {
   ApiService get _api => ApiService.to;
   StorageService get _storage => StorageService.to;
 
+  /// Role do utilizador autenticado, em memoria (sincrono).
+  final roleAtual = RxnString();
+
+  /// Verdadeiro se o utilizador autenticado e um familiar (acesso limitado).
+  bool get isFamiliar => roleAtual.value == 'familiar';
+
+  /// Acessos do utilizador (para familiares: os que o titular atribuiu).
+  /// Para nao-familiares, fica vazio e podeAceder() devolve sempre true.
+  final acessos = <String>{}.obs;
+
+  /// Verifica se o utilizador pode aceder a uma area.
+  /// Nao-familiares acedem a tudo; familiares so ao que tem atribuido.
+  bool podeAceder(String area) {
+    if (!isFamiliar) return true;
+    return acessos.contains(area);
+  }
+
+  /// Carrega o role guardado no storage para memoria (chamar no arranque).
+  Future<void> carregarRole() async {
+    final u = await _storage.getUser();
+    roleAtual.value = u['role'];
+    await carregarAcessos();
+  }
+
+  /// Carrega os acessos do utilizador via API (so relevante para familiares).
+  Future<void> carregarAcessos() async {
+    try {
+      final resp = await _api.dio.get('/me/acessos');
+      final lista = (resp.data['acessos'] as List?)?.map((e) => e.toString()).toList() ?? [];
+      acessos.assignAll(lista);
+    } catch (_) {
+      // Silencioso: se falhar, fica sem acessos (familiar nao ve nada extra).
+    }
+  }
+
   /// Login com email + password.
   ///
   /// Em caso de sucesso, guarda o token e os dados do user no storage seguro.
@@ -60,11 +95,15 @@ class AuthService extends GetxService {
       final roles = user['roles'] as List;
       await _storage.saveUser(
         id: user['id'] as int,
-        email: user['email'] as String,
+        email: user['email'] as String?,
         name: user['name'] as String,
         role: roles.isNotEmpty ? roles.first as String : '',
-        empresaGestoraId: user['empresa_gestora_id'] as int,
+        empresaGestoraId: user['empresa_gestora_id'] as int?,
+        condominioNome: user['condominio_nome'] as String?,
       );
+
+      roleAtual.value = roles.isNotEmpty ? roles.first as String : '';
+      await carregarAcessos();
 
       return AuthSuccess(token: token, user: user);
     } on DioException catch (e) {
@@ -96,11 +135,16 @@ class AuthService extends GetxService {
       final roles = user['roles'] as List? ?? [];
       await _storage.saveUser(
         id: user['id'] as int,
-        email: user['email'] as String,
+        email: user['email'] as String?,
         name: user['name'] as String,
         role: roles.isNotEmpty ? roles.first as String : '',
-        empresaGestoraId: user['empresa_gestora_id'] as int,
+        empresaGestoraId: user['empresa_gestora_id'] as int?,
+        condominioNome: user['condominio_nome'] as String?,
       );
+
+      // Define o role e carrega os acessos (token ja garantido aqui).
+      roleAtual.value = roles.isNotEmpty ? roles.first as String : '';
+      await carregarAcessos();
 
       return user;
     } on DioException catch (_) {

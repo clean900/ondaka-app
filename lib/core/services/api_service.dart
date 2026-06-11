@@ -1,6 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+
+import '../../features/acordos/models/acordo.dart';
+import '../../features/acordos/views/acesso_limitado_view.dart';
 import '../config/api_config.dart';
 import 'storage_service.dart';
 
@@ -59,6 +62,16 @@ class ApiService extends GetxService {
             if (Get.currentRoute != '/login') {
               Get.offAllNamed('/login');
             }
+          }
+          // 403 limitado → acesso bloqueado por dívida: navega para ecrã dedicado
+          final data = error.response?.data;
+          if (error.response?.statusCode == 403 &&
+              data is Map &&
+              data['limitado'] == true) {
+            final info = data['motivo'] is Map
+                ? LimitacaoInfo.fromJson(Map<String, dynamic>.from(data['motivo']))
+                : null;
+            Get.to(() => AcessoLimitadoView(info: info));
           }
           return handler.next(error);
         },

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../nps/repositories/nps_repository.dart';
 import '../../nps/views/nps_inquerito_view.dart';
+import '../../publicidade/popup_publicidade.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../../../core/services/storage_service.dart';
@@ -25,6 +26,13 @@ class _HomeViewState extends State<HomeView> {
     super.initState();
     _userFuture = StorageService.to.getUser();
     _verificarNps();
+    _verificarPopupPublicidade();
+  }
+
+  Future<void> _verificarPopupPublicidade() async {
+    await Future.delayed(const Duration(seconds: 3));
+    if (!mounted) return;
+    await PopupPublicidade.verificarEMostrar(context);
   }
 
   Future<void> _verificarNps() async {
@@ -65,8 +73,9 @@ class _HomeViewState extends State<HomeView> {
             }
             final user = snapshot.data!;
             final nome = (user['name'] ?? 'Utilizador').split(' ').first;
-            // TODO: ligar ao backend quando módulo Extracto existir.
-            const condominio = 'Paparazzi';
+            final condominio = (user['condominio_nome']?.isNotEmpty ?? false)
+                ? user['condominio_nome']!
+                : 'o seu condomínio';
             final saudacao = _saudacao();
             final dataStr = _dataExtenso();
 
@@ -153,7 +162,7 @@ class _HomeViewState extends State<HomeView> {
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
                           ).createShader(bounds),
-                          child: const Text(
+                          child: Text(
                             condominio,
                             style: TextStyle(
                               fontSize: 12,
@@ -168,7 +177,8 @@ class _HomeViewState extends State<HomeView> {
                     const SizedBox(height: 18),
 
                     // === Dashboard Financeiro (Saldo + Pagar + Gráfico + Movimentos) ===
-                    const DashboardFinanceiroWidget(),
+                    // Escondido para familiares (regra de ouro — so o titular ve dinheiro)
+                    if (!AuthService.to.isFamiliar) const DashboardFinanceiroWidget(),
                   ],
                 ),
               ),

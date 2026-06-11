@@ -75,7 +75,7 @@ class LoginView extends StatelessWidget {
                     ),
                     const SizedBox(height: 40),
 
-                    // === Campo Email ===
+                    // === Campo Email ou Telemóvel ===
                     TextFormField(
                       controller: c.emailController,
                       keyboardType: TextInputType.emailAddress,
@@ -83,9 +83,9 @@ class LoginView extends StatelessWidget {
                       autocorrect: false,
                       validator: c.validateEmail,
                       decoration: const InputDecoration(
-                        labelText: 'Email',
-                        hintText: 'exemplo@ondaka.ao',
-                        prefixIcon: Icon(Icons.email_outlined, size: 20),
+                        labelText: 'Email ou telemóvel',
+                        hintText: 'exemplo@ondaka.ao ou 9XX XXX XXX',
+                        prefixIcon: Icon(Icons.person_outline, size: 20),
                       ),
                     ),
                     const SizedBox(height: 16),

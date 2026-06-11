@@ -57,4 +57,10 @@ class PerfilRepository {
 
     return response.data['message'] as String? ?? 'Password actualizada.';
   }
+
+  /// Apaga (soft-delete) a conta do utilizador autenticado.
+  Future<String> apagarConta() async {
+    final response = await _dio.delete('/me/conta');
+    return response.data['message'] as String? ?? 'Conta apagada.';
+  }
 }

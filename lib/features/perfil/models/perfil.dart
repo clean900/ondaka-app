@@ -40,7 +40,7 @@ class Perfil {
     return Perfil(
       id: json['id'] as int,
       name: json['name'] as String,
-      email: json['email'] as String,
+      email: json['email'] as String? ?? '',
       telefone: json['telefone'] as String?,
       empresaGestoraId: json['empresa_gestora_id'] as int,
       estado: json['estado'] as String? ?? 'activo',
