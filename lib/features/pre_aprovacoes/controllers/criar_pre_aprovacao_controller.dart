@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../me/models/me_fraccoes.dart';
+import '../../me/repositories/me_repository.dart';
 import '../models/pre_aprovacao.dart';
 import '../repositories/pre_aprovacao_repository.dart';
 
@@ -16,18 +18,23 @@ import '../repositories/pre_aprovacao_repository.dart';
 /// - Navegação pós-sucesso
 class CriarPreAprovacaoController extends GetxController {
   final PreAprovacaoRepository _repository;
+  final MeRepository _meRepository;
 
-  CriarPreAprovacaoController({PreAprovacaoRepository? repository})
-      : _repository = repository ?? PreAprovacaoRepository();
+  CriarPreAprovacaoController({
+    PreAprovacaoRepository? repository,
+    MeRepository? meRepository,
+  })  : _repository = repository ?? PreAprovacaoRepository(),
+        _meRepository = meRepository ?? MeRepository();
 
   // === Form state ===
   final nomeController = TextEditingController();
   final telefoneController = TextEditingController();
   final observacoesController = TextEditingController();
 
-  // Fracção seleccionada (por enquanto fixo — vamos melhorar mais tarde)
-  // TODO: buscar fracções do condomino via API quando tivermos endpoint
-  final fraccaoId = 68.obs;
+  // Imóvel seleccionado — carregado de /me/fraccoes (não mais hardcoded).
+  final fraccoes = <MinhaFraccao>[].obs;
+  final fraccaoId = Rxn<int>();
+  final isLoadingFraccoes = false.obs;
 
   // Data de validade (reactiva)
   final validaAte = Rx<DateTime?>(null);
@@ -36,6 +43,12 @@ class CriarPreAprovacaoController extends GetxController {
   final isLoading = false.obs;
   final errorMessage = Rx<String?>(null);
   final preAprovacaoCriada = Rx<PreAprovacao?>(null);
+
+  @override
+  void onInit() {
+    super.onInit();
+    carregarFraccoes();
+  }
 
   @override
   void onClose() {
@@ -47,6 +60,28 @@ class CriarPreAprovacaoController extends GetxController {
 
   // === Actions ===
 
+  /// Carrega os imóveis do condómino para o seletor.
+  /// Se só houver um, fica logo seleccionado.
+  Future<void> carregarFraccoes() async {
+    isLoadingFraccoes.value = true;
+    try {
+      final payload = await _meRepository.fraccoes();
+      fraccoes.assignAll(payload.fraccoes);
+      if (fraccoes.length == 1) {
+        fraccaoId.value = fraccoes.first.id;
+      }
+    } catch (_) {
+      // Silencioso: o seletor mostra estado vazio e submeter() valida.
+    } finally {
+      isLoadingFraccoes.value = false;
+    }
+  }
+
+  /// Define o imóvel seleccionado.
+  void seleccionarFraccao(int? id) {
+    fraccaoId.value = id;
+  }
+
   /// Define validade através de atalho ("hoje +4h", "amanhã 20h", etc).
   void definirValidadeAtalho(DateTime novaData) {
     validaAte.value = novaData;
@@ -55,6 +90,13 @@ class CriarPreAprovacaoController extends GetxController {
   /// Submete o formulário.
   Future<void> submeter() async {
     // Validação local
+    if (fraccaoId.value == null) {
+      errorMessage.value = fraccoes.isEmpty
+          ? 'Não tem imóvel associado para pré-aprovar visitas.'
+          : 'Escolha o imóvel.';
+      return;
+    }
+
     if (nomeController.text.trim().length < 2) {
       errorMessage.value = 'Nome do visitante deve ter pelo menos 2 caracteres.';
       return;
@@ -81,7 +123,7 @@ class CriarPreAprovacaoController extends GetxController {
 
     try {
       final pa = await _repository.criar(
-        fraccaoId: fraccaoId.value,
+        fraccaoId: fraccaoId.value!,
         nomeVisitante: nomeController.text.trim(),
         telefoneVisitante: _formatarTelefone(telefoneController.text.trim()),
         validaAte: validaAte.value!,

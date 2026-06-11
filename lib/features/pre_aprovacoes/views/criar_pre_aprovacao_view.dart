@@ -35,6 +35,12 @@ class CriarPreAprovacaoView extends StatelessWidget {
             children: [
               const SizedBox(height: 8),
 
+              // Imóvel
+              _label('Imóvel'),
+              const SizedBox(height: 6),
+              _seletorImovel(controller),
+              const SizedBox(height: 20),
+
               // Nome
               _label('Nome do visitante'),
               const SizedBox(height: 6),
@@ -169,6 +175,89 @@ class CriarPreAprovacaoView extends StatelessWidget {
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       );
+
+  Widget _caixa({required Widget child}) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        child: child,
+      );
+
+  Widget _seletorImovel(CriarPreAprovacaoController controller) {
+    return Obx(() {
+      if (controller.isLoadingFraccoes.value) {
+        return _caixa(
+          child: Row(
+            children: const [
+              SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.textMuted,
+                ),
+              ),
+              SizedBox(width: 10),
+              Text('A carregar imóveis…',
+                  style: TextStyle(color: AppColors.textMuted)),
+            ],
+          ),
+        );
+      }
+
+      if (controller.fraccoes.isEmpty) {
+        return _caixa(
+          child: const Text(
+            'Sem imóvel associado à sua conta.',
+            style: TextStyle(color: Colors.redAccent),
+          ),
+        );
+      }
+
+      // Só um imóvel — mostra como leitura (já fica seleccionado).
+      if (controller.fraccoes.length == 1) {
+        final f = controller.fraccoes.first;
+        return _caixa(
+          child: Row(
+            children: [
+              const Icon(Icons.home_outlined,
+                  color: AppColors.textMuted, size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(f.labelCompleto,
+                    style: const TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        );
+      }
+
+      // Vários imóveis — dropdown.
+      return _caixa(
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<int>(
+            isExpanded: true,
+            dropdownColor: AppColors.bgDark,
+            value: controller.fraccaoId.value,
+            hint: Text('Escolher imóvel',
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.3))),
+            icon: const Icon(Icons.arrow_drop_down, color: AppColors.textMuted),
+            items: controller.fraccoes
+                .map((f) => DropdownMenuItem<int>(
+                      value: f.id,
+                      child: Text(f.labelCompleto,
+                          style: const TextStyle(color: Colors.white)),
+                    ))
+                .toList(),
+            onChanged: controller.seleccionarFraccao,
+          ),
+        ),
+      );
+    });
+  }
 
   Widget _atalhosDataView(CriarPreAprovacaoController controller) {
     final agora = DateTime.now();
