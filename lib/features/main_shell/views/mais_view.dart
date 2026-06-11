@@ -37,6 +37,15 @@ class MaisView extends StatelessWidget {
         final auth = AuthService.to;
         bool pode(String acesso) => !auth.isFamiliar || auth.acessos.contains(acesso);
         final ehFamiliar = auth.isFamiliar;
+        // "Minhas ordens" é uma função B2B (ordens de compra da empresa gestora).
+        // Só faz sentido para perfis de gestão; o condómino nunca tem ordens.
+        const rolesGestao = {
+          'administrador-condominio',
+          'gestor',
+          'admin-empresa',
+          'super-admin',
+        };
+        final ehGestao = rolesGestao.contains(auth.roleAtual.value);
 
         final cards = <Widget>[
           _MaisCard(
@@ -126,7 +135,7 @@ class MaisView extends StatelessWidget {
               subtitulo: 'Convocatórias, actas',
               onTap: () => Get.to(() => const MinhasAssembleiasView()),
             ),
-          if (!ehFamiliar)
+          if (ehGestao)
             _MaisCard(
               icon: Icons.receipt_long_outlined,
               cor: AppColors.purple,
