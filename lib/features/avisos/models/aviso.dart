@@ -191,16 +191,18 @@ class Aviso {
   factory Aviso.fromJson(Map<String, dynamic> json) {
     return Aviso(
       id: json['id'] as int,
-      empresaGestoraId: json['empresa_gestora_id'] as int,
-      condominioId: json['condominio_id'] as int,
-      autorUserId: json['autor_user_id'] as int,
+      // Parse defensivo: um unico campo null no JSON crashava o parse da lista
+      // inteira -> o aviso so aparecia no sino, nunca em "Avisos" (bug B-08).
+      empresaGestoraId: json['empresa_gestora_id'] as int? ?? 0,
+      condominioId: json['condominio_id'] as int? ?? 0,
+      autorUserId: json['autor_user_id'] as int? ?? 0,
       autorNome: (json['autor'] as Map?)?['name'] as String?,
       condominioNome: (json['condominio'] as Map?)?['nome'] as String?,
-      titulo: json['titulo'] as String,
-      descricao: json['descricao'] as String,
-      categoria: AvisoCategoria.fromString(json['categoria'] as String),
-      prioridade: AvisoPrioridade.fromString(json['prioridade'] as String),
-      estado: AvisoEstado.fromString(json['estado'] as String),
+      titulo: json['titulo'] as String? ?? '',
+      descricao: json['descricao'] as String? ?? '',
+      categoria: AvisoCategoria.fromString(json['categoria'] as String? ?? ''),
+      prioridade: AvisoPrioridade.fromString(json['prioridade'] as String? ?? ''),
+      estado: AvisoEstado.fromString(json['estado'] as String? ?? ''),
       publicarEm: json['publicar_em'] != null
           ? DateTime.parse(json['publicar_em'] as String).toLocal()
           : null,
