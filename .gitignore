@@ -49,3 +49,4 @@ app.*.map.json
 DARTEOF
 flutter_01.png
 *.bak
+*.bak-*
