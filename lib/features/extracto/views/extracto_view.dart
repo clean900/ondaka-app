@@ -33,6 +33,13 @@ class ExtractoView extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
+        if (controller.erro.value != null && controller.saldo.value == null) {
+          return _ErroExtracto(
+            mensagem: controller.erro.value!,
+            onRetry: controller.carregarTudo,
+          );
+        }
+
         return RefreshIndicator(
           onRefresh: controller.carregarTudo,
           child: ListView(
@@ -499,6 +506,45 @@ class _VazioMovimentos extends StatelessWidget {
             style: TextStyle(color: AppColors.textMuted, fontSize: 14),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Estado de erro do extracto (quando nem o saldo carregou), com retry.
+class _ErroExtracto extends StatelessWidget {
+  final String mensagem;
+  final Future<void> Function() onRetry;
+
+  const _ErroExtracto({required this.mensagem, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, color: AppColors.danger, size: 44),
+            const SizedBox(height: 12),
+            Text(
+              mensagem,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Tentar de novo'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.cyan,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -70,7 +70,8 @@ class _ChecklistExecucaoViewState extends State<ChecklistExecucaoView> {
       Get.snackbar('Concluído', 'Checklist submetida com sucesso.',
           backgroundColor: AppColors.success, colorText: const Color(0xFFFFFFFF));
     } else {
-      Get.snackbar('Erro', 'Não foi possível submeter. Tente novamente.',
+      Get.snackbar(
+          'Erro', c.erroSubmissao.value ?? 'Não foi possível submeter. Tente novamente.',
           backgroundColor: AppColors.dangerSoft, colorText: const Color(0xFFFFFFFF));
     }
   }
