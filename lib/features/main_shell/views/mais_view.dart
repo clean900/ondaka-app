@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
@@ -194,6 +195,8 @@ class MaisView extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
             ),
+            const SizedBox(height: 20),
+            const _RodapeLegal(),
           ],
         );
       }),
@@ -223,6 +226,49 @@ class MaisView extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Rodapé legal: links para Política de Privacidade e Termos (exigência das lojas).
+class _RodapeLegal extends StatelessWidget {
+  const _RodapeLegal();
+
+  Future<void> _abrir(String url) async {
+    final uri = Uri.parse(url);
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextButton(
+              onPressed: () => _abrir('https://ondaka.ao/privacidade'),
+              child: const Text(
+                'Política de Privacidade',
+                style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+              ),
+            ),
+            const Text('·', style: TextStyle(color: AppColors.textMuted)),
+            TextButton(
+              onPressed: () => _abrir('https://ondaka.ao/termos'),
+              child: const Text(
+                'Termos & Condições',
+                style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'ONDAKA · v1.0.0',
+          style: TextStyle(color: AppColors.textFaint, fontSize: 11),
+        ),
+      ],
     );
   }
 }
