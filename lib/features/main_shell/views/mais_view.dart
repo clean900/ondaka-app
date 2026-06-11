@@ -146,7 +146,7 @@ class MaisView extends StatelessWidget {
           _MaisCard(
             icon: Icons.help_outline,
             cor: AppColors.warning,
-            titulo: 'FAQs',
+            titulo: 'Sobre o nosso condomínio',
             subtitulo: 'Perguntas frequentes',
             onTap: () => Get.to(() => const FaqsView()),
           ),
@@ -157,7 +157,7 @@ class MaisView extends StatelessWidget {
             subtitulo: 'Contactar gestão',
             onTap: () => Get.to(() => const SuporteView()),
           ),
-          if (!ehFamiliar)
+          if (ehGestao)
             _MaisCard(
               icon: Icons.chat_bubble_outline,
               cor: AppColors.cyan,
