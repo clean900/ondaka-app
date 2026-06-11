@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../app/theme/app_colors.dart';
 import '../controllers/notificacao_controller.dart';
 import '../models/notificacao.dart';
+import '../utils/notificacao_navigator.dart';
 import '../widgets/notificacao_item.dart';
 
 /// Vista de lista de notificacoes (modal bottomsheet).
@@ -90,11 +91,8 @@ class NotificacoesView extends StatelessWidget {
     }
     // Fecha bottomsheet
     Navigator.of(context).pop();
-    // Navega para URL se houver
-    if (notif.url != null && notif.url!.isNotEmpty) {
-      // TODO: implementar navegação por URL quando o sistema de routes interno suportar.
-      // Por agora apenas fecha; futuramente Get.toNamed(notif.url!) ou similar.
-    }
+    // Navega para o ecrã interno correspondente ao tipo da notificação.
+    NotificacaoNavigator.abrir(notif);
   }
 }
 
