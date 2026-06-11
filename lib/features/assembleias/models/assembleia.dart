@@ -129,12 +129,15 @@ class AssembleiaDetalhe {
   });
 
   factory AssembleiaDetalhe.fromJson(Map<String, dynamic> json) {
+    // 'participante' vem null quando o utilizador nao e participante da
+    // assembleia (ex.: gestor/admin). Antes rebentava o parse -> ecra preto.
+    final participante = json['participante'] as Map<String, dynamic>?;
     return AssembleiaDetalhe(
       assembleia: Assembleia.fromJson(json['assembleia'] as Map<String, dynamic>),
-      participanteId: json['participante']['id'] as int,
-      numeroFraccoes: json['participante']['numero_fraccoes'] as int? ?? 0,
-      permilagemTotal: _toDouble(json['participante']['permilagem_total']),
-      pontos: (json['pontos'] as List<dynamic>)
+      participanteId: participante?['id'] as int? ?? 0,
+      numeroFraccoes: participante?['numero_fraccoes'] as int? ?? 0,
+      permilagemTotal: _toDouble(participante?['permilagem_total']),
+      pontos: (json['pontos'] as List<dynamic>? ?? [])
           .map((p) => PontoVotacao.fromJson(p as Map<String, dynamic>))
           .toList(),
     );

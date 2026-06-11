@@ -31,6 +31,9 @@ class AssembleiaDetalheController extends GetxController {
       detalhe.value = await _repo.obter(assembleiaId);
     } on DioException catch (e) {
       erro.value = e.response?.data?['message'] as String? ?? 'Erro.';
+    } catch (_) {
+      // Qualquer outro erro (ex.: parse) mostra estado de erro, nao ecra preto.
+      erro.value = 'Nao foi possivel carregar a assembleia.';
     } finally {
       isLoading.value = false;
     }
