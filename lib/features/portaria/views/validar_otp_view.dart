@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../controllers/validar_otp_controller.dart';
+import 'scan_qr_view.dart';
 import 'validacao_sucesso_view.dart';
 
 class ValidarOtpView extends StatelessWidget {
@@ -153,6 +154,42 @@ class ValidarOtpView extends StatelessWidget {
                             letterSpacing: 1,
                           ),
                         ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Alternativa: ler o QR do visitante com a câmara
+              SizedBox(
+                height: 56,
+                child: OutlinedButton.icon(
+                  onPressed: controller.isLoading.value
+                      ? null
+                      : () async {
+                          final token = await Navigator.of(context).push<String>(
+                            MaterialPageRoute(
+                              builder: (_) => const ScanQrView(),
+                            ),
+                          );
+                          if (token != null && token.isNotEmpty) {
+                            controller.validarQrToken(token);
+                          }
+                        },
+                  icon: const Icon(Icons.qr_code_scanner, color: AppColors.cyan),
+                  label: const Text(
+                    'LER QR DO VISITANTE',
+                    style: TextStyle(
+                      color: AppColors.cyan,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.cyan),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
               ),
             ],

@@ -55,6 +55,30 @@ class ValidarOtpController extends GetxController {
     }
   }
 
+  /// Valida via token lido do QR do visitante (câmara). Reaproveita o mesmo
+  /// fluxo de sucesso (visitaAutorizada) do OTP manual.
+  Future<void> validarQrToken(String token) async {
+    final t = token.trim();
+    if (t.isEmpty) {
+      errorMessage.value = 'QR inválido.';
+      return;
+    }
+
+    errorMessage.value = null;
+    isLoading.value = true;
+
+    try {
+      final visita = await _repository.validarQr(t);
+      visitaAutorizada.value = visita;
+    } on DioException catch (e) {
+      errorMessage.value = _extrairErroDio(e);
+    } catch (e) {
+      errorMessage.value = 'Erro inesperado. Tente novamente.';
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   void proximaValidacao() {
     otpController.clear();
     errorMessage.value = null;
