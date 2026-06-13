@@ -52,14 +52,18 @@ class Assembleia {
   factory Assembleia.fromJson(Map<String, dynamic> json) {
     return Assembleia(
       id: json['id'] as int,
-      numero: json['numero'] as String,
-      tipo: json['tipo'] as String,
-      titulo: json['titulo'] as String,
+      // Parse defensivo: o detalhe (only() no backend) pode devolver campos null
+      // que crashavam o cast nao-nullable -> ecra preto/erro (ver B-08).
+      numero: json['numero'] as String? ?? '',
+      tipo: json['tipo'] as String? ?? '',
+      titulo: json['titulo'] as String? ?? '',
       ordemDoDia: json['ordem_do_dia'] as String?,
-      dataAgendada: DateTime.parse(json['data_agendada'] as String).toLocal(),
+      dataAgendada: json['data_agendada'] != null
+          ? DateTime.parse(json['data_agendada'] as String).toLocal()
+          : DateTime.now(),
       local: json['local'] as String?,
-      modo: json['modo'] as String,
-      estado: AssembleiaEstado.fromString(json['estado'] as String),
+      modo: json['modo'] as String? ?? 'virtual',
+      estado: AssembleiaEstado.fromString(json['estado'] as String? ?? ''),
       actaGerada: json['acta_gerada'] == true || json['acta_gerada'] == 1,
       actaPath: json['acta_path'] as String?,
       salaJitsi: json['sala_jitsi'] as String?,
@@ -102,10 +106,10 @@ class PontoVotacao {
     return PontoVotacao(
       id: json['id'] as int,
       ordem: json['ordem'] as int? ?? 0,
-      titulo: json['titulo'] as String,
+      titulo: json['titulo'] as String? ?? '',
       descricao: json['descricao'] as String?,
-      tipo: json['tipo'] as String,
-      estado: json['estado'] as String,
+      tipo: json['tipo'] as String? ?? '',
+      estado: json['estado'] as String? ?? '',
       opcoes: opcoesList,
       meuVoto: json['meu_voto'] as String?,
       votacaoAberta: json['votacao_aberta'] == true,
