@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../models/pre_aprovacao.dart';
@@ -117,6 +118,37 @@ class PreAprovacaoSucessoView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
+
+          // QR Code — alternativa ao código: o visitante mostra na portaria
+          if (preAprovacao.qrToken.isNotEmpty) ...[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                children: [
+                  QrImageView(
+                    data: preAprovacao.qrToken,
+                    version: QrVersions.auto,
+                    size: 200,
+                    backgroundColor: Colors.white,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Mostre este QR na portaria',
+                    style: TextStyle(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
 
           // Info cards
           _infoCard(
