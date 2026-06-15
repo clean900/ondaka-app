@@ -139,8 +139,8 @@ class MaisView extends StatelessWidget {
             _MaisCard(
               icon: Icons.fact_check_outlined,
               cor: AppColors.cyan,
-              titulo: 'Despesas da Comissão',
-              subtitulo: 'Aprovar despesas pendentes',
+              titulo: 'Aprovar Despesas',
+              subtitulo: 'Despesas pendentes da comissão',
               onTap: () => Get.toNamed(AppRoutes.despesasComissao),
             ),
           if (ehGestao)
@@ -154,7 +154,7 @@ class MaisView extends StatelessWidget {
           _MaisCard(
             icon: Icons.help_outline,
             cor: AppColors.warning,
-            titulo: 'Sobre o nosso condomínio',
+            titulo: 'Nosso Condomínio',
             subtitulo: 'Perguntas frequentes',
             onTap: () => Get.to(() => const FaqsView()),
           ),

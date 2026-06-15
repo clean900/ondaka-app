@@ -14,7 +14,7 @@ class DespesasComissaoView extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.bgDark,
       appBar: AppBar(
-        title: const Text('Despesas da Comissão'),
+        title: const Text('Aprovar Despesas'),
         backgroundColor: AppColors.bgDark,
         elevation: 0,
       ),
