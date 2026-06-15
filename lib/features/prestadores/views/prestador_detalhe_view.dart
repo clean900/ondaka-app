@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../app/theme/app_colors.dart';
 import '../controllers/prestadores_controller.dart';
 import '../models/prestador.dart';
@@ -127,6 +128,22 @@ class _Contacto extends StatelessWidget {
   final String telefone;
   const _Contacto({required this.telefone});
 
+  Future<void> _ligar() async {
+    final tel = telefone.replaceAll(' ', '');
+    final uri = Uri.parse('tel:$tel');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      Get.snackbar(
+        'Erro',
+        'Nao foi possivel iniciar a chamada.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.surface,
+        colorText: AppColors.textMain,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -138,13 +155,7 @@ class _Contacto extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () => Get.snackbar(
-            'Contacto',
-            telefone,
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: AppColors.surface,
-            colorText: AppColors.textMain,
-          ),
+          onTap: _ligar,
           child: const Padding(
             padding: EdgeInsets.symmetric(vertical: 14),
             child: Row(
