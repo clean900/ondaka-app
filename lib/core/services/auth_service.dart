@@ -35,6 +35,10 @@ class AuthService extends GetxService {
   /// Role do utilizador autenticado, em memoria (sincrono).
   final roleAtual = RxnString();
 
+  /// Verdadeiro se o utilizador e membro da comissao de moradores de algum
+  /// condominio (F-03). Define o acesso ao ecra de aprovacao de despesas.
+  final eMembroComissao = false.obs;
+
   /// Verdadeiro se o utilizador autenticado e um familiar (acesso limitado).
   bool get isFamiliar => roleAtual.value == 'familiar';
 
@@ -103,6 +107,7 @@ class AuthService extends GetxService {
       );
 
       roleAtual.value = roles.isNotEmpty ? roles.first as String : '';
+      eMembroComissao.value = user['e_membro_comissao'] == true;
       await carregarAcessos();
 
       return AuthSuccess(token: token, user: user);
@@ -144,6 +149,7 @@ class AuthService extends GetxService {
 
       // Define o role e carrega os acessos (token ja garantido aqui).
       roleAtual.value = roles.isNotEmpty ? roles.first as String : '';
+      eMembroComissao.value = user['e_membro_comissao'] == true;
       await carregarAcessos();
 
       return user;

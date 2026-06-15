@@ -135,6 +135,14 @@ class MaisView extends StatelessWidget {
               subtitulo: 'Convocatórias, actas',
               onTap: () => Get.to(() => const MinhasAssembleiasView()),
             ),
+          if (auth.eMembroComissao.value)
+            _MaisCard(
+              icon: Icons.fact_check_outlined,
+              cor: AppColors.cyan,
+              titulo: 'Despesas da Comissão',
+              subtitulo: 'Aprovar despesas pendentes',
+              onTap: () => Get.toNamed(AppRoutes.despesasComissao),
+            ),
           if (ehGestao)
             _MaisCard(
               icon: Icons.receipt_long_outlined,

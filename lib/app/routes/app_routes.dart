@@ -30,4 +30,7 @@ abstract class AppRoutes {
   static const dentroAgora = '/portaria/dentro-agora';
 
   static const marketplace = '/marketplace';
+
+  // Comissão de moradores (F-03)
+  static const despesasComissao = '/despesas-comissao';
 }
