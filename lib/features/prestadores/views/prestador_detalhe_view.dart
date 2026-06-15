@@ -71,18 +71,17 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(
-          width: 72,
-          height: 72,
-          decoration: BoxDecoration(
-            gradient: AppColors.brandGradient,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            prestador.nome.isNotEmpty ? prestador.nome[0].toUpperCase() : '?',
-            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w600, color: Colors.white),
-          ),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: prestador.fotoUrl != null
+              ? Image.network(
+                  prestador.fotoUrl!,
+                  width: 72,
+                  height: 72,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => _avatarInicial(prestador.nome),
+                )
+              : _avatarInicial(prestador.nome),
         ),
         const SizedBox(height: 12),
         Text(
@@ -124,19 +123,36 @@ class _Header extends StatelessWidget {
   }
 }
 
+Widget _avatarInicial(String nome) {
+  return Container(
+    width: 72,
+    height: 72,
+    decoration: BoxDecoration(
+      gradient: AppColors.brandGradient,
+      borderRadius: BorderRadius.circular(20),
+    ),
+    alignment: Alignment.center,
+    child: Text(
+      nome.isNotEmpty ? nome[0].toUpperCase() : '?',
+      style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w600, color: Colors.white),
+    ),
+  );
+}
+
 class _Contacto extends StatelessWidget {
   final String telefone;
   const _Contacto({required this.telefone});
 
   Future<void> _ligar() async {
-    final tel = telefone.replaceAll(' ', '');
+    final tel = telefone.replaceAll(RegExp(r'[^0-9+]'), '');
     final uri = Uri.parse('tel:$tel');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    } else {
+    try {
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok) throw Exception('launch retornou false');
+    } catch (_) {
       Get.snackbar(
-        'Erro',
-        'Nao foi possivel iniciar a chamada.',
+        'Sem aplicação de chamadas',
+        'Este dispositivo não tem marcador. Número: $telefone',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColors.surface,
         colorText: AppColors.textMain,

@@ -29,7 +29,7 @@ class PrestadorCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _Avatar(nome: prestador.nome),
+            _Avatar(nome: prestador.nome, fotoUrl: prestador.fotoUrl),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -107,10 +107,27 @@ class PrestadorCard extends StatelessWidget {
 
 class _Avatar extends StatelessWidget {
   final String nome;
-  const _Avatar({required this.nome});
+  final String? fotoUrl;
+  const _Avatar({required this.nome, this.fotoUrl});
 
   @override
   Widget build(BuildContext context) {
+    if (fotoUrl != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.network(
+          fotoUrl!,
+          width: 44,
+          height: 44,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => _inicial(),
+        ),
+      );
+    }
+    return _inicial();
+  }
+
+  Widget _inicial() {
     final inicial = nome.isNotEmpty ? nome[0].toUpperCase() : '?';
     return Container(
       width: 44,

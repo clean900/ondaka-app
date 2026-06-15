@@ -50,6 +50,16 @@ class Prestador {
       distanciaKm: toDouble(json['distancia_km']),
     );
   }
+
+  /// URL completa do logo/foto do prestador, ou null se não tiver.
+  /// Ficheiros são servidos via /ficheiros/ (não /storage/) — ver CLAUDE.md.
+  String? get fotoUrl {
+    final p = fotoPath;
+    if (p == null || p.isEmpty) return null;
+    if (p.startsWith('http')) return p;
+    final limpo = p.replaceFirst(RegExp(r'^/?storage/'), '').replaceFirst(RegExp(r'^/'), '');
+    return 'https://ondaka.ao/ficheiros/$limpo';
+  }
 }
 
 /// Categoria de prestador.
