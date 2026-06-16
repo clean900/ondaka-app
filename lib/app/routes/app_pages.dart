@@ -11,6 +11,7 @@ import '../../features/splash/views/splash_view.dart';
 import '../../features/prestadores/views/prestadores_view.dart';
 import '../../features/marketplace/views/marketplace_view.dart';
 import '../../features/despesas_comissao/views/despesas_comissao_view.dart';
+import '../../features/documentos/views/documentos_view.dart';
 import 'app_routes.dart';
 
 abstract class AppPages {
@@ -29,5 +30,6 @@ abstract class AppPages {
     GetPage(name: AppRoutes.dentroAgora, page: () => const DentroAgoraView()),
     GetPage(name: AppRoutes.marketplace, page: () => const MarketplaceView()),
     GetPage(name: AppRoutes.despesasComissao, page: () => const DespesasComissaoView()),
+    GetPage(name: AppRoutes.documentos, page: () => const DocumentosView()),
   ];
 }

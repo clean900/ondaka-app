@@ -159,6 +159,13 @@ class MaisView extends StatelessWidget {
             onTap: () => Get.to(() => const FaqsView()),
           ),
           _MaisCard(
+            icon: Icons.folder_outlined,
+            cor: AppColors.info,
+            titulo: 'Documentos',
+            subtitulo: 'Regulamento, contratos e outros',
+            onTap: () => Get.toNamed(AppRoutes.documentos),
+          ),
+          _MaisCard(
             icon: Icons.support_agent_outlined,
             cor: AppColors.info,
             titulo: 'Suporte',

@@ -33,4 +33,7 @@ abstract class AppRoutes {
 
   // Comissão de moradores (F-03)
   static const despesasComissao = '/despesas-comissao';
+
+  // Documentos do condomínio (F-01)
+  static const documentos = '/documentos';
 }
