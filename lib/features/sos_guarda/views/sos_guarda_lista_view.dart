@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../sos/models/tipo_sos.dart';
 import '../repositories/sos_guarda_repository.dart';
+import '../utils/sos_sirene.dart';
 import 'sos_guarda_detalhe_view.dart';
 
 /// Lista de alertas SOS dos condomínios atribuídos ao guarda.
@@ -22,6 +23,8 @@ class _SosGuardaListaViewState extends State<SosGuardaListaView> {
   bool _isLoading = true;
   String? _erro;
   int _segundosDesdeUpdate = 0;
+  Set<int> _idsAbertosVistos = {};
+  bool _silenciado = false;
 
   late final Stream<int> _ticker = Stream.periodic(const Duration(seconds: 1), (i) => i);
   late final Stream<int> _polling = Stream.periodic(const Duration(seconds: 30), (i) => i);
@@ -47,6 +50,7 @@ class _SosGuardaListaViewState extends State<SosGuardaListaView> {
         _erro = null;
         _segundosDesdeUpdate = 0;
       });
+      _avaliarSirene(lista);
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -54,6 +58,38 @@ class _SosGuardaListaViewState extends State<SosGuardaListaView> {
         _isLoading = false;
       });
     }
+  }
+
+  /// Toca a sirene quando há SOS abertos; volta a tocar se chegar um novo
+  /// mesmo depois de silenciado; pára quando não há nenhum aberto.
+  void _avaliarSirene(List<AlertaListado> lista) {
+    final abertos = lista.where((a) => a.estado == 'aberto').map((a) => a.id).toSet();
+    final novos = abertos.difference(_idsAbertosVistos);
+    _idsAbertosVistos = abertos;
+
+    if (abertos.isEmpty) {
+      _silenciado = false;
+      SosSirene.instance.parar();
+      return;
+    }
+    if (novos.isNotEmpty) {
+      _silenciado = false;
+      SosSirene.instance.tocar();
+    } else if (!_silenciado && !SosSirene.instance.aTocar) {
+      SosSirene.instance.tocar();
+    }
+    if (mounted) setState(() {});
+  }
+
+  void _silenciar() {
+    setState(() => _silenciado = true);
+    SosSirene.instance.parar();
+  }
+
+  @override
+  void dispose() {
+    SosSirene.instance.parar();
+    super.dispose();
   }
 
   @override
@@ -67,6 +103,12 @@ class _SosGuardaListaViewState extends State<SosGuardaListaView> {
         title: const Text('Emergências SOS'),
         backgroundColor: AppColors.bgDark,
         actions: [
+          if (SosSirene.instance.aTocar)
+            IconButton(
+              onPressed: _silenciar,
+              tooltip: 'Silenciar sirene',
+              icon: const Icon(Icons.volume_off, color: AppColors.danger),
+            ),
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: Center(
@@ -132,7 +174,7 @@ class _SosGuardaListaViewState extends State<SosGuardaListaView> {
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       itemCount: _alertas.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (_, i) => _Item(
         alerta: _alertas[i],
         onTap: () async {
