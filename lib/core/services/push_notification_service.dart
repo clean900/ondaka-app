@@ -7,6 +7,8 @@ import 'package:get/get.dart';
 import 'api_service.dart';
 import 'storage_service.dart';
 import '../../features/avisos/views/aviso_detalhe_view.dart';
+import '../../features/sos_guarda/views/sos_guarda_lista_view.dart';
+import '../../features/sos_guarda/utils/sos_sirene.dart';
 
 /// Serviço para gerir push notifications via Firebase Cloud Messaging.
 class PushNotificationService extends GetxService {
@@ -21,6 +23,18 @@ class PushNotificationService extends GetxService {
     'Notificações ONDAKA',
     description: 'Avisos, pedidos e alertas do condomínio',
     importance: Importance.max,
+  );
+
+  /// Canal dedicado ao SOS — toca a sirene (res/raw/sirene_sos) com
+  /// importância máxima, mesmo com a app em background/fechada.
+  static const AndroidNotificationChannel _canalSos = AndroidNotificationChannel(
+    'ondaka_sos',
+    'Alertas SOS',
+    description: 'Emergências SOS — sirene de alerta para guardas',
+    importance: Importance.max,
+    sound: RawResourceAndroidNotificationSound('sirene_sos'),
+    playSound: true,
+    enableVibration: true,
   );
 
   String? _fcmToken;
@@ -42,36 +56,52 @@ class PushNotificationService extends GetxService {
       initSettings,
       onDidReceiveNotificationResponse: (resp) {
         final payload = resp.payload;
-        if (payload != null && payload.isNotEmpty) {
-          debugPrint('[Push] Notificação local tocada: \$payload');
+        if (payload == 'sos') {
+          SosSirene.instance.parar();
+          Get.to(() => const SosGuardaListaView());
         }
       },
     );
-    await _localNotif
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(_canal);
+    final androidPlugin = _localNotif
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    await androidPlugin?.createNotificationChannel(_canal);
+    await androidPlugin?.createNotificationChannel(_canalSos);
     _localNotifPronto = true;
   }
 
   void _mostrarNotificacaoLocal(RemoteMessage message) {
     final n = message.notification;
     if (n == null) return;
+    final ehSos = message.data['tipo']?.toString() == 'sos';
+    final canal = ehSos ? _canalSos : _canal;
     _localNotif.show(
       n.hashCode,
       n.title,
       n.body,
       NotificationDetails(
         android: AndroidNotificationDetails(
-          _canal.id,
-          _canal.name,
-          channelDescription: _canal.description,
+          canal.id,
+          canal.name,
+          channelDescription: canal.description,
           importance: Importance.max,
           priority: Priority.high,
           icon: '@mipmap/ic_launcher',
+          sound: ehSos
+              ? const RawResourceAndroidNotificationSound('sirene_sos')
+              : null,
+          category: ehSos ? AndroidNotificationCategory.alarm : null,
         ),
-        iOS: const DarwinNotificationDetails(),
+        iOS: DarwinNotificationDetails(
+          sound: ehSos ? 'sirene_sos.mp3' : null,
+        ),
       ),
+      payload: message.data['tipo']?.toString(),
     );
+    // SOS em foreground: além do toque do canal, arranca a sirene em loop
+    // (silenciada no ecrã da lista SOS ou quando o alerta é resolvido).
+    if (ehSos) {
+      SosSirene.instance.tocar();
+    }
   }
 
   Future<void> _setup() async {
@@ -124,6 +154,8 @@ class PushNotificationService extends GetxService {
     final avisoId = int.tryParse(data['aviso_id']?.toString() ?? '');
     if (tipo == 'aviso_publicado' && avisoId != null) {
       Get.to(() => AvisoDetalheView(avisoId: avisoId));
+    } else if (tipo == 'sos') {
+      Get.to(() => const SosGuardaListaView());
     }
   }
 
@@ -148,22 +180,35 @@ class PushNotificationService extends GetxService {
   void _mostrarSnackbar(RemoteMessage message) {
     final title = message.notification?.title ?? 'Notificação';
     final body = message.notification?.body ?? '';
+    final ehSos = message.data['tipo']?.toString() == 'sos';
     Get.snackbar(
       title,
       body,
       snackPosition: SnackPosition.TOP,
-      duration: const Duration(seconds: 10),
-      icon: const Icon(Icons.notifications_active, color: Colors.white),
-      backgroundColor: const Color(0xCC1F2937),
+      duration: Duration(seconds: ehSos ? 30 : 10),
+      icon: Icon(
+        ehSos ? Icons.warning_amber_rounded : Icons.notifications_active,
+        color: Colors.white,
+      ),
+      backgroundColor: ehSos ? const Color(0xEEB91C1C) : const Color(0xCC1F2937),
       colorText: Colors.white,
       borderRadius: 12,
       margin: const EdgeInsets.all(12),
       isDismissible: true,
       shouldIconPulse: true,
-      mainButton: TextButton(
-        onPressed: () => Get.closeCurrentSnackbar(),
-        child: const Text('OK', style: TextStyle(color: Colors.white)),
-      ),
+      mainButton: ehSos
+          ? TextButton(
+              onPressed: () {
+                Get.closeCurrentSnackbar();
+                Get.to(() => const SosGuardaListaView());
+              },
+              child: const Text('Atender',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            )
+          : TextButton(
+              onPressed: () => Get.closeCurrentSnackbar(),
+              child: const Text('OK', style: TextStyle(color: Colors.white)),
+            ),
     );
   }
 }
