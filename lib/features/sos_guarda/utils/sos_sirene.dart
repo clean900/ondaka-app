@@ -14,7 +14,7 @@ class SosSirene {
     aTocar = true;
     try {
       await _player.setReleaseMode(ReleaseMode.loop);
-      await _player.play(AssetSource('audio/sirene.wav'), volume: 1.0);
+      await _player.play(AssetSource('audio/sirene.mp3'), volume: 1.0);
     } catch (_) {
       aTocar = false;
     }
