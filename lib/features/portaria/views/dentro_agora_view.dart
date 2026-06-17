@@ -301,9 +301,14 @@ class DentroAgoraView extends StatelessWidget {
 
   String _formatarDuracao(int minutos) {
     if (minutos < 60) return 'há $minutos min';
-    final horas = minutos ~/ 60;
-    final resto = minutos % 60;
-    if (resto == 0) return 'há ${horas}h';
-    return 'há ${horas}h ${resto}min';
+    final totalHoras = minutos ~/ 60;
+    final m = minutos % 60;
+    final d = totalHoras ~/ 24;
+    final h = totalHoras % 24;
+    final partes = <String>[];
+    if (d > 0) partes.add('${d}d');
+    if (h > 0) partes.add('${h}h');
+    if (m > 0) partes.add('${m}min');
+    return 'há ${partes.isEmpty ? '0min' : partes.join(' ')}';
   }
 }

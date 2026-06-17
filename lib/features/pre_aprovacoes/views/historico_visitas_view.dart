@@ -375,10 +375,15 @@ class _HistoricoVisitasViewState extends State<HistoricoVisitasView> {
 
   String _fmtDuracao(int minutos) {
     if (minutos < 60) return '${minutos}min';
-    final h = minutos ~/ 60;
+    final totalHoras = minutos ~/ 60;
     final m = minutos % 60;
-    if (m == 0) return '${h}h';
-    return '${h}h ${m}min';
+    final d = totalHoras ~/ 24;
+    final h = totalHoras % 24;
+    final partes = <String>[];
+    if (d > 0) partes.add('${d}d');
+    if (h > 0) partes.add('${h}h');
+    if (m > 0) partes.add('${m}min');
+    return partes.isEmpty ? '0min' : partes.join(' ');
   }
 }
 
