@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -14,6 +15,9 @@ Future<void> main() async {
 
   // Inicializar Firebase ANTES dos services (push depende dele)
   await Firebase.initializeApp();
+
+  // Handler de SOS em background/app fechada (full-screen alarme + sirene).
+  FirebaseMessaging.onBackgroundMessage(sosFirebaseBackgroundHandler);
 
   // Inicializar dados de formatacao de datas em pt_PT (intl)
   await initializeDateFormatting('pt_PT', null);

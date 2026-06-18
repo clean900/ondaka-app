@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/material.dart';
@@ -7,8 +10,64 @@ import 'package:get/get.dart';
 import 'api_service.dart';
 import 'storage_service.dart';
 import '../../features/avisos/views/aviso_detalhe_view.dart';
-import '../../features/sos_guarda/views/sos_guarda_lista_view.dart';
+import '../../features/sos_guarda/views/sos_alarme_view.dart';
 import '../../features/sos_guarda/utils/sos_sirene.dart';
+
+/// Canal SOS — partilhado entre o serviço e o background handler.
+/// Importância máxima + som de sirene (res/raw/sirene_sos). Tem de existir no
+/// device para o som tocar quando a notificação chega em background/fechada.
+const AndroidNotificationChannel canalSos = AndroidNotificationChannel(
+  'ondaka_sos',
+  'Alertas SOS',
+  description: 'Emergências SOS — sirene de alerta para guardas',
+  importance: Importance.max,
+  sound: RawResourceAndroidNotificationSound('sirene_sos'),
+  playSound: true,
+  enableVibration: true,
+);
+
+/// Handler de mensagens FCM em BACKGROUND/app fechada (isolate separado).
+/// Para SOS (data-only), constrói uma notificação full-screen que acorda o
+/// ecrã e lança o alarme vermelho mesmo com a app fechada. Tem de ser uma
+/// função top-level com @pragma('vm:entry-point').
+@pragma('vm:entry-point')
+Future<void> sosFirebaseBackgroundHandler(RemoteMessage message) async {
+  if (message.data['tipo']?.toString() != 'sos') return;
+  await Firebase.initializeApp();
+
+  final fln = FlutterLocalNotificationsPlugin();
+  await fln.initialize(
+    const InitializationSettings(
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+    ),
+  );
+  await fln
+      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+      ?.createNotificationChannel(canalSos);
+
+  final titulo = message.data['titulo']?.toString() ?? '🚨 SOS';
+  final corpo = message.data['corpo']?.toString() ?? 'Emergência recebida';
+
+  await fln.show(
+    20260618,
+    titulo,
+    corpo,
+    NotificationDetails(
+      android: AndroidNotificationDetails(
+        canalSos.id,
+        canalSos.name,
+        channelDescription: canalSos.description,
+        importance: Importance.max,
+        priority: Priority.max,
+        category: AndroidNotificationCategory.alarm,
+        fullScreenIntent: true,
+        sound: const RawResourceAndroidNotificationSound('sirene_sos'),
+        icon: '@mipmap/ic_launcher',
+      ),
+    ),
+    payload: jsonEncode(message.data),
+  );
+}
 
 /// Serviço para gerir push notifications via Firebase Cloud Messaging.
 class PushNotificationService extends GetxService {
@@ -23,18 +82,6 @@ class PushNotificationService extends GetxService {
     'Notificações ONDAKA',
     description: 'Avisos, pedidos e alertas do condomínio',
     importance: Importance.max,
-  );
-
-  /// Canal dedicado ao SOS — toca a sirene (res/raw/sirene_sos) com
-  /// importância máxima, mesmo com a app em background/fechada.
-  static const AndroidNotificationChannel _canalSos = AndroidNotificationChannel(
-    'ondaka_sos',
-    'Alertas SOS',
-    description: 'Emergências SOS — sirene de alerta para guardas',
-    importance: Importance.max,
-    sound: RawResourceAndroidNotificationSound('sirene_sos'),
-    playSound: true,
-    enableVibration: true,
   );
 
   String? _fcmToken;
@@ -54,54 +101,60 @@ class PushNotificationService extends GetxService {
     );
     await _localNotif.initialize(
       initSettings,
-      onDidReceiveNotificationResponse: (resp) {
-        final payload = resp.payload;
-        if (payload == 'sos') {
-          SosSirene.instance.parar();
-          Get.to(() => const SosGuardaListaView());
-        }
-      },
+      onDidReceiveNotificationResponse: (resp) => _abrirAlarmeDePayload(resp.payload),
     );
     final androidPlugin = _localNotif
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     await androidPlugin?.createNotificationChannel(_canal);
-    await androidPlugin?.createNotificationChannel(_canalSos);
+    await androidPlugin?.createNotificationChannel(canalSos);
     _localNotifPronto = true;
+  }
+
+  /// Abre o ecrã de alarme SOS a partir dos dados do push.
+  void _abrirAlarmeSos(Map<String, dynamic> data) {
+    final titulo = data['titulo']?.toString() ?? '🚨 SOS';
+    final corpo = data['corpo']?.toString() ?? '';
+    final local = corpo.toLowerCase().startsWith('local:')
+        ? corpo.substring(6).trim()
+        : null;
+    final sosId = int.tryParse(data['sos_id']?.toString() ?? '');
+    SosSirene.instance.tocar();
+    Get.to(() => SosAlarmeView(tipoLabel: titulo, local: local, sosId: sosId));
+  }
+
+  /// Abre o alarme a partir do payload (JSON) de uma notificação tocada/lançada.
+  void _abrirAlarmeDePayload(String? payload) {
+    if (payload == null || payload.isEmpty) return;
+    try {
+      final data = jsonDecode(payload);
+      if (data is Map && data['tipo']?.toString() == 'sos') {
+        _abrirAlarmeSos(Map<String, dynamic>.from(data));
+      }
+    } catch (_) {
+      // payload antigo (string simples) — ignora.
+    }
   }
 
   void _mostrarNotificacaoLocal(RemoteMessage message) {
     final n = message.notification;
     if (n == null) return;
-    final ehSos = message.data['tipo']?.toString() == 'sos';
-    final canal = ehSos ? _canalSos : _canal;
     _localNotif.show(
       n.hashCode,
       n.title,
       n.body,
       NotificationDetails(
         android: AndroidNotificationDetails(
-          canal.id,
-          canal.name,
-          channelDescription: canal.description,
+          _canal.id,
+          _canal.name,
+          channelDescription: _canal.description,
           importance: Importance.max,
           priority: Priority.high,
           icon: '@mipmap/ic_launcher',
-          sound: ehSos
-              ? const RawResourceAndroidNotificationSound('sirene_sos')
-              : null,
-          category: ehSos ? AndroidNotificationCategory.alarm : null,
         ),
-        iOS: DarwinNotificationDetails(
-          sound: ehSos ? 'sirene_sos.mp3' : null,
-        ),
+        iOS: const DarwinNotificationDetails(),
       ),
       payload: message.data['tipo']?.toString(),
     );
-    // SOS em foreground: além do toque do canal, arranca a sirene em loop
-    // (silenciada no ecrã da lista SOS ou quando o alerta é resolvido).
-    if (ehSos) {
-      SosSirene.instance.tocar();
-    }
   }
 
   Future<void> _setup() async {
@@ -134,7 +187,12 @@ class PushNotificationService extends GetxService {
       });
 
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        debugPrint('[Push] Mensagem recebida (foreground): ${message.notification?.title}');
+        debugPrint('[Push] Mensagem recebida (foreground): ${message.data}');
+        // SOS em foreground → abre o alarme full-screen directamente.
+        if (message.data['tipo']?.toString() == 'sos') {
+          _abrirAlarmeSos(message.data);
+          return;
+        }
         _mostrarNotificacaoLocal(message);
         _mostrarSnackbar(message);
       });
@@ -143,9 +201,28 @@ class PushNotificationService extends GetxService {
         debugPrint('[Push] App aberta via notificação: ${message.data}');
         _abrirDestino(message);
       });
+
+      // App lançada a partir de uma notificação SOS (estava fechada):
+      // verifica tanto o FCM como a notificação local full-screen.
+      final msgInicial = await _messaging.getInitialMessage();
+      if (msgInicial != null && msgInicial.data['tipo']?.toString() == 'sos') {
+        _abrirAposArranque(() => _abrirAlarmeSos(msgInicial.data));
+      } else {
+        final launch = await _localNotif.getNotificationAppLaunchDetails();
+        if (launch?.didNotificationLaunchApp ?? false) {
+          final payload = launch!.notificationResponse?.payload;
+          _abrirAposArranque(() => _abrirAlarmeDePayload(payload));
+        }
+      }
     } catch (e) {
       debugPrint('[Push] Erro setup: $e');
     }
+  }
+
+  /// Atrasa a abertura do alarme para depois do arranque (splash → home),
+  /// para o Get.to não correr antes do GetMaterialApp estar montado.
+  void _abrirAposArranque(void Function() acao) {
+    Future.delayed(const Duration(seconds: 2), acao);
   }
 
   void _abrirDestino(RemoteMessage message) {
@@ -155,7 +232,7 @@ class PushNotificationService extends GetxService {
     if (tipo == 'aviso_publicado' && avisoId != null) {
       Get.to(() => AvisoDetalheView(avisoId: avisoId));
     } else if (tipo == 'sos') {
-      Get.to(() => const SosGuardaListaView());
+      _abrirAlarmeSos(data);
     }
   }
 
@@ -180,35 +257,22 @@ class PushNotificationService extends GetxService {
   void _mostrarSnackbar(RemoteMessage message) {
     final title = message.notification?.title ?? 'Notificação';
     final body = message.notification?.body ?? '';
-    final ehSos = message.data['tipo']?.toString() == 'sos';
     Get.snackbar(
       title,
       body,
       snackPosition: SnackPosition.TOP,
-      duration: Duration(seconds: ehSos ? 30 : 10),
-      icon: Icon(
-        ehSos ? Icons.warning_amber_rounded : Icons.notifications_active,
-        color: Colors.white,
-      ),
-      backgroundColor: ehSos ? const Color(0xEEB91C1C) : const Color(0xCC1F2937),
+      duration: const Duration(seconds: 10),
+      icon: const Icon(Icons.notifications_active, color: Colors.white),
+      backgroundColor: const Color(0xCC1F2937),
       colorText: Colors.white,
       borderRadius: 12,
       margin: const EdgeInsets.all(12),
       isDismissible: true,
       shouldIconPulse: true,
-      mainButton: ehSos
-          ? TextButton(
-              onPressed: () {
-                Get.closeCurrentSnackbar();
-                Get.to(() => const SosGuardaListaView());
-              },
-              child: const Text('Atender',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            )
-          : TextButton(
-              onPressed: () => Get.closeCurrentSnackbar(),
-              child: const Text('OK', style: TextStyle(color: Colors.white)),
-            ),
+      mainButton: TextButton(
+        onPressed: () => Get.closeCurrentSnackbar(),
+        child: const Text('OK', style: TextStyle(color: Colors.white)),
+      ),
     );
   }
 }
