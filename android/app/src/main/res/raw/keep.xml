@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  O som da sirene SOS (raw/sirene_sos) é referenciado só por nome em runtime
+  (RawResourceAndroidNotificationSound no Dart), por isso o resource shrinker do
+  R8 não o vê como usado e remove-o do APK release. Este keep.xml força a sua
+  inclusão. Sem ele: PlatformException(invalid_sound, resource sirene_sos not found).
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@raw/sirene_sos" />
