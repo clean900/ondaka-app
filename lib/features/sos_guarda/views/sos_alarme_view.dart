@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../utils/sos_sirene.dart';
 import 'sos_guarda_lista_view.dart';
+import 'sos_guarda_detalhe_view.dart';
 
 /// Ecrã de alarme SOS — full-screen vermelho a piscar com sirene em loop.
 /// Aberto assim que chega um SOS (mesmo com a app fechada, via full-screen
@@ -47,7 +48,12 @@ class _SosAlarmeViewState extends State<SosAlarmeView>
 
   void _atender() {
     SosSirene.instance.parar();
-    Get.off(() => const SosGuardaListaView());
+    // Abrir a ocorrência é a primeira intervenção — silencia e mostra o detalhe.
+    if (widget.sosId != null) {
+      Get.off(() => SosGuardaDetalheView(alertaId: widget.sosId!));
+    } else {
+      Get.off(() => const SosGuardaListaView());
+    }
   }
 
   @override

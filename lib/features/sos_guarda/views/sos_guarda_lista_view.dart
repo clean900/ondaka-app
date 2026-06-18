@@ -24,7 +24,6 @@ class _SosGuardaListaViewState extends State<SosGuardaListaView> {
   String? _erro;
   int _segundosDesdeUpdate = 0;
   Set<int> _idsAbertosVistos = {};
-  bool _silenciado = false;
 
   late final Stream<int> _ticker = Stream.periodic(const Duration(seconds: 1), (i) => i);
   late final Stream<int> _polling = Stream.periodic(const Duration(seconds: 30), (i) => i);
@@ -68,22 +67,20 @@ class _SosGuardaListaViewState extends State<SosGuardaListaView> {
     _idsAbertosVistos = abertos;
 
     if (abertos.isEmpty) {
-      _silenciado = false;
       SosSirene.instance.parar();
       return;
     }
+    // Só toca quando CHEGA um SOS novo — não fica a "ralhar" pelos já conhecidos
+    // (assim, depois de o guarda abrir a ocorrência, fica em silêncio).
     if (novos.isNotEmpty) {
-      _silenciado = false;
-      SosSirene.instance.tocar();
-    } else if (!_silenciado && !SosSirene.instance.aTocar) {
       SosSirene.instance.tocar();
     }
     if (mounted) setState(() {});
   }
 
   void _silenciar() {
-    setState(() => _silenciado = true);
     SosSirene.instance.parar();
+    if (mounted) setState(() {});
   }
 
   @override
@@ -178,6 +175,7 @@ class _SosGuardaListaViewState extends State<SosGuardaListaView> {
       itemBuilder: (_, i) => _Item(
         alerta: _alertas[i],
         onTap: () async {
+          _silenciar(); // abrir a ocorrência pára a sirene
           await Get.to(() => SosGuardaDetalheView(alertaId: _alertas[i].id));
           _carregar(); // refresh ao voltar
         },
