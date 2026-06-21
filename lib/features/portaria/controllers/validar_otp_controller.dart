@@ -19,6 +19,8 @@ class ValidarOtpController extends GetxController {
   final isLoading = false.obs;
   final errorMessage = Rx<String?>(null);
   final visitaAutorizada = Rx<Visita?>(null);
+  // Alerta da Lista Negra (não bloqueia — avisa o guarda).
+  final listaNegraAlerta = Rx<Map<String, dynamic>?>(null);
 
   @override
   void onClose() {
@@ -44,8 +46,9 @@ class ValidarOtpController extends GetxController {
     isLoading.value = true;
 
     try {
-      final visita = await _repository.validarOtp(otp);
-      visitaAutorizada.value = visita;
+      final r = await _repository.validarOtp(otp);
+      visitaAutorizada.value = r.visita;
+      listaNegraAlerta.value = r.listaNegra;
     } on DioException catch (e) {
       errorMessage.value = _extrairErroDio(e);
     } catch (e) {
@@ -68,8 +71,9 @@ class ValidarOtpController extends GetxController {
     isLoading.value = true;
 
     try {
-      final visita = await _repository.validarQr(t);
-      visitaAutorizada.value = visita;
+      final r = await _repository.validarQr(t);
+      visitaAutorizada.value = r.visita;
+      listaNegraAlerta.value = r.listaNegra;
     } on DioException catch (e) {
       errorMessage.value = _extrairErroDio(e);
     } catch (e) {
@@ -83,6 +87,7 @@ class ValidarOtpController extends GetxController {
     otpController.clear();
     errorMessage.value = null;
     visitaAutorizada.value = null;
+    listaNegraAlerta.value = null;
   }
 
   void voltar() {

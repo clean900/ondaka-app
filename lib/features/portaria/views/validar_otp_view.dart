@@ -22,10 +22,18 @@ class ValidarOtpView extends StatelessWidget {
       ),
       body: Obx(() {
         if (controller.visitaAutorizada.value != null) {
-          return ValidacaoSucessoView(
-            visita: controller.visitaAutorizada.value!,
-            onProximo: controller.proximaValidacao,
-            onFechar: controller.voltar,
+          final alerta = controller.listaNegraAlerta.value;
+          return Column(
+            children: [
+              if (alerta != null) _bannerListaNegra(alerta),
+              Expanded(
+                child: ValidacaoSucessoView(
+                  visita: controller.visitaAutorizada.value!,
+                  onProximo: controller.proximaValidacao,
+                  onFechar: controller.voltar,
+                ),
+              ),
+            ],
           );
         }
 
@@ -196,6 +204,51 @@ class ValidarOtpView extends StatelessWidget {
           ),
         );
       }),
+    );
+  }
+
+  /// Banner vermelho de alerta: o visitante consta na Lista Negra.
+  Widget _bannerListaNegra(Map<String, dynamic> alerta) {
+    final motivo = alerta['motivo']?.toString();
+    return Container(
+      width: double.infinity,
+      color: const Color(0xFFB91C1C),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      child: Row(
+        children: [
+          const Icon(Icons.gpp_bad, color: Colors.white, size: 32),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '⚠️ LISTA NEGRA',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  alerta['mensagem']?.toString() ??
+                      'Este visitante consta na lista negra do condomínio.',
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                ),
+                if (motivo != null && motivo.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Motivo: $motivo',
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
