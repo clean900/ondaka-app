@@ -203,6 +203,13 @@ class _FormularioPasse extends StatelessWidget {
               keyboardType: TextInputType.phone,
               onChanged: (v) => c.telefone.value = v,
             ),
+            TextField(
+              decoration: const InputDecoration(
+                labelText: 'Função / Motivo',
+                hintText: 'Ex.: Canalizador, Pintor, Motorista',
+              ),
+              onChanged: (v) => c.funcao.value = v,
+            ),
             Row(children: [
               Expanded(
                 child: DropdownButtonFormField<String>(

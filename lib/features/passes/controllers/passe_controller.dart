@@ -29,6 +29,7 @@ class PasseController extends GetxController {
   final telefone = ''.obs;
   final tipoDocumento = 'bi'.obs;
   final numeroDocumento = ''.obs;
+  final funcao = ''.obs; // ex.: Canalizador, Pintor, Motorista (ajuda a decisão do gestor)
   final validaDesde = Rx<DateTime?>(null);
   final validaAte = Rx<DateTime?>(null);
   final documentoPath = Rx<String?>(null);
@@ -106,6 +107,7 @@ class PasseController extends GetxController {
         validaAte: validaAte.value!,
         documentoPath: documentoPath.value!,
         fotoVisitantePath: fotoPath.value!,
+        observacoes: funcao.value.trim(),
       );
       _limparForm();
       await carregar();
@@ -133,6 +135,7 @@ class PasseController extends GetxController {
     nomeVisitante.value = '';
     telefone.value = '';
     numeroDocumento.value = '';
+    funcao.value = '';
     validaDesde.value = null;
     validaAte.value = null;
     documentoPath.value = null;
