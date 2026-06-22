@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -109,8 +110,19 @@ class PasseController extends GetxController {
       _limparForm();
       await carregar();
       return true;
-    } catch (_) {
-      erro.value = 'Erro ao solicitar. Tente novamente.';
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      if (data is Map && data['message'] != null) {
+        erro.value = data['message'].toString();
+      } else if (data is Map && data['errors'] is Map) {
+        final errs = (data['errors'] as Map).values;
+        erro.value = errs.isNotEmpty ? (errs.first as List).first.toString() : 'Dados inválidos.';
+      } else {
+        erro.value = 'Erro ao solicitar (HTTP ${e.response?.statusCode ?? 'sem ligação'}).';
+      }
+      return false;
+    } catch (e) {
+      erro.value = 'Erro inesperado: $e';
       return false;
     } finally {
       aSubmeter.value = false;
