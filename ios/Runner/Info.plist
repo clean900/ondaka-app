@@ -69,6 +69,8 @@
 		<!-- Permissões (strings exigidas pela App Store; sem elas a app é rejeitada/crasha) -->
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>A ONDAKA usa a sua localização para enviar a posição em alertas de emergência SOS.</string>
+		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+		<string>A ONDAKA usa a sua localização para enviar a posição em alertas de emergência SOS.</string>
 		<key>NSCameraUsageDescription</key>
 		<string>A ONDAKA usa a câmara para ler códigos QR na portaria e anexar fotos a pedidos.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
