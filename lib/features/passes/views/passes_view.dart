@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/theme/app_colors.dart';
@@ -80,6 +81,7 @@ class _PasseCard extends StatelessWidget {
   const _PasseCard({required this.passe});
 
   Future<void> _abrir(String url) async => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  Future<void> _partilhar(String url) async => Share.shareUri(Uri.parse(url));
 
   @override
   Widget build(BuildContext context) {
@@ -126,11 +128,17 @@ class _PasseCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => _abrir(passe.pdfUrl!),
-                    icon: const Icon(Icons.download, size: 18),
-                    label: const Text('Descarregar / partilhar passe'),
+                    onPressed: () => _partilhar(passe.pdfUrl!),
+                    icon: const Icon(Icons.share, size: 18),
+                    label: const Text('Partilhar passe'),
                     style: OutlinedButton.styleFrom(foregroundColor: AppColors.cyan),
                   ),
+                ),
+                const SizedBox(width: 8),
+                OutlinedButton(
+                  onPressed: () => _abrir(passe.pdfUrl!),
+                  style: OutlinedButton.styleFrom(foregroundColor: AppColors.textMuted),
+                  child: const Icon(Icons.download, size: 20),
                 ),
               ],
             ),
