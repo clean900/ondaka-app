@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/app_colors.dart';
+import '../../passes/views/passes_view.dart';
 import '../repositories/pre_aprovacao_repository.dart';
 import 'criar_pre_aprovacao_view.dart';
 import 'historico_visitas_view.dart';
@@ -24,7 +25,7 @@ class _VisitasShellViewState extends State<VisitasShellView>
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: 3,
+      length: 4,
       vsync: this,
       initialIndex: 1, // arranca em "Minhas"
     );
@@ -47,9 +48,11 @@ class _VisitasShellViewState extends State<VisitasShellView>
           indicatorColor: AppColors.cyan,
           labelColor: AppColors.cyan,
           unselectedLabelColor: AppColors.textMuted,
+          isScrollable: true,
           tabs: const [
             Tab(icon: Icon(Icons.person_add_outlined), text: 'Pré-aprovar'),
             Tab(icon: Icon(Icons.list_alt_outlined), text: 'Minhas'),
+            Tab(icon: Icon(Icons.badge_outlined), text: 'Passes'),
             Tab(icon: Icon(Icons.history), text: 'Histórico'),
           ],
         ),
@@ -59,6 +62,7 @@ class _VisitasShellViewState extends State<VisitasShellView>
         children: [
           const CriarPreAprovacaoView(),
           const MinhasPreAprovacoesView(),
+          const PassesView(),
           HistoricoVisitasView(
             fetch: PreAprovacaoRepository().historicoVisitas,
           ),
