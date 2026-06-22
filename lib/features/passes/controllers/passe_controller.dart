@@ -31,6 +31,7 @@ class PasseController extends GetxController {
   final validaDesde = Rx<DateTime?>(null);
   final validaAte = Rx<DateTime?>(null);
   final documentoPath = Rx<String?>(null);
+  final fotoPath = Rx<String?>(null);
 
   @override
   void onInit() {
@@ -40,16 +41,18 @@ class PasseController extends GetxController {
 
   Future<void> carregar() async {
     isLoading.value = true;
+    // Carregamentos independentes — uma falha não bloqueia a outra.
     try {
       passes.assignAll(await _repo.listar());
+    } catch (_) {}
+    try {
       final payload = await _meRepo.fraccoes();
       fraccoes.assignAll(payload.fraccoes);
-      if (fraccoes.length == 1) fraccaoId.value = fraccoes.first.id;
-    } catch (_) {
-      erro.value = 'Erro ao carregar passes.';
-    } finally {
-      isLoading.value = false;
-    }
+      if (fraccaoId.value == null && fraccoes.isNotEmpty) {
+        fraccaoId.value = fraccoes.first.id;
+      }
+    } catch (_) {}
+    isLoading.value = false;
   }
 
   Future<void> escolherDocumento() async {
@@ -62,12 +65,23 @@ class PasseController extends GetxController {
     if (x != null) documentoPath.value = x.path;
   }
 
+  Future<void> tirarFotoVisitante() async {
+    final x = await _picker.pickImage(source: ImageSource.camera, imageQuality: 75);
+    if (x != null) fotoPath.value = x.path;
+  }
+
+  Future<void> escolherFotoVisitante() async {
+    final x = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 75);
+    if (x != null) fotoPath.value = x.path;
+  }
+
   String? _validar() {
     if (fraccaoId.value == null) return 'Escolha o imóvel.';
     if (nomeVisitante.value.trim().isEmpty) return 'Indique o nome do visitante.';
     if (validaDesde.value == null || validaAte.value == null) return 'Defina as datas de validade.';
     if (validaAte.value!.isBefore(validaDesde.value!)) return 'A data final tem de ser após a inicial.';
-    if (documentoPath.value == null) return 'Anexe um documento do visitante.';
+    if (fotoPath.value == null) return 'Tire uma foto do visitante (vai no passe).';
+    if (documentoPath.value == null) return 'Anexe o documento de identificação do visitante.';
     return null;
   }
 
@@ -90,6 +104,7 @@ class PasseController extends GetxController {
         validaDesde: validaDesde.value!,
         validaAte: validaAte.value!,
         documentoPath: documentoPath.value!,
+        fotoVisitantePath: fotoPath.value!,
       );
       _limparForm();
       await carregar();
@@ -109,5 +124,6 @@ class PasseController extends GetxController {
     validaDesde.value = null;
     validaAte.value = null;
     documentoPath.value = null;
+    fotoPath.value = null;
   }
 }

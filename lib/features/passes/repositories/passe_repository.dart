@@ -25,6 +25,7 @@ class PasseRepository {
     required DateTime validaAte,
     String? observacoes,
     required String documentoPath,
+    required String fotoVisitantePath,
   }) async {
     final form = FormData.fromMap({
       'fraccao_id': fraccaoId,
@@ -37,6 +38,7 @@ class PasseRepository {
       'valida_ate': validaAte.toIso8601String(),
       if (observacoes != null && observacoes.isNotEmpty) 'observacoes': observacoes,
       'documento': await MultipartFile.fromFile(documentoPath),
+      'foto_visitante': await MultipartFile.fromFile(fotoVisitantePath),
     });
     await _dio.post('/passes', data: form);
   }

@@ -16,36 +16,51 @@ class PassesView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.bgDark,
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.cyan,
-        onPressed: () => _abrirFormulario(context, c),
-        icon: const Icon(Icons.add),
-        label: const Text('Solicitar'),
-      ),
-      body: Obx(() {
-        if (c.isLoading.value) return const Center(child: CircularProgressIndicator());
-        if (c.passes.isEmpty) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(32),
-              child: Text(
-                'Sem passes.\nSolicite um passe para prestadores ou trabalhadores.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textMuted),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: ElevatedButton.icon(
+                onPressed: () => _abrirFormulario(context, c),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Solicitar passe'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.cyan,
+                  foregroundColor: Colors.black,
+                ),
               ),
             ),
-          );
-        }
-        return RefreshIndicator(
-          onRefresh: c.carregar,
-          child: ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: c.passes.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 10),
-            itemBuilder: (_, i) => _PasseCard(passe: c.passes[i]),
           ),
-        );
-      }),
+          Expanded(
+            child: Obx(() {
+              if (c.isLoading.value) return const Center(child: CircularProgressIndicator());
+              if (c.passes.isEmpty) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Text(
+                      'Sem passes.\nSolicite um passe para prestadores ou trabalhadores.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: AppColors.textMuted),
+                    ),
+                  ),
+                );
+              }
+              return RefreshIndicator(
+                onRefresh: c.carregar,
+                child: ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: c.passes.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  itemBuilder: (_, i) => _PasseCard(passe: c.passes[i]),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
     );
   }
 
@@ -161,14 +176,19 @@ class _FormularioPasse extends StatelessWidget {
           children: [
             const Text('Solicitar passe', style: TextStyle(color: AppColors.textMain, fontSize: 18, fontWeight: FontWeight.w700)),
             const SizedBox(height: 16),
-            if (c.fraccoes.length > 1)
+            if (c.fraccoes.isNotEmpty)
               DropdownButtonFormField<int>(
                 value: c.fraccaoId.value,
                 dropdownColor: AppColors.surface,
                 decoration: const InputDecoration(labelText: 'Imóvel'),
                 items: c.fraccoes.map((f) => DropdownMenuItem(value: f.id, child: Text(f.identificador))).toList(),
                 onChanged: (v) => c.fraccaoId.value = v,
-              ),
+              )
+            else
+              Row(children: [
+                const Expanded(child: Text('Sem imóveis carregados.', style: TextStyle(color: AppColors.warning, fontSize: 12))),
+                TextButton(onPressed: c.carregar, child: const Text('Recarregar')),
+              ]),
             Row(children: [
               Expanded(child: _seg('Prestador', 'prestador', c)),
               const SizedBox(width: 8),
@@ -213,13 +233,28 @@ class _FormularioPasse extends StatelessWidget {
               Expanded(child: _dataBtn(context, 'Fim', c.validaAte, fmt)),
             ]),
             const SizedBox(height: 12),
-            // Documento anexo
+            // Foto do visitante (vai no passe) — obrigatória
+            Row(children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: c.tirarFotoVisitante,
+                  icon: const Icon(Icons.camera_alt, size: 18),
+                  label: Text(c.fotoPath.value == null ? 'Foto do visitante *' : 'Foto do visitante ✓'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: c.fotoPath.value == null ? AppColors.textMuted : AppColors.success,
+                  ),
+                ),
+              ),
+              IconButton(onPressed: c.escolherFotoVisitante, icon: const Icon(Icons.photo_library, color: AppColors.cyan)),
+            ]),
+            const SizedBox(height: 8),
+            // Documento de identificação — obrigatório
             Row(children: [
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: c.escolherDocumento,
                   icon: const Icon(Icons.attach_file, size: 18),
-                  label: Text(c.documentoPath.value == null ? 'Anexar documento' : 'Documento anexado ✓'),
+                  label: Text(c.documentoPath.value == null ? 'Documento de identificação *' : 'Documento anexado ✓'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: c.documentoPath.value == null ? AppColors.textMuted : AppColors.success,
                   ),
