@@ -15,12 +15,17 @@ class ChatbotController extends GetxController {
   final RxBool loading = false.obs;
   final RxString erro = ''.obs;
 
-  // Sugestões iniciais (mesmas que o web)
   final List<String> sugestoesIniciais = const [
     'Como pago a taxa de condomínio?',
     'Como pré-aprovo uma visita?',
     'O que é o Fundo de Reserva?',
     'Como activar o ProxyPay?',
+    'O que é o Passe de Visitante?',
+    'Como solicitar um passe para um prestador?',
+    'O que é a Lista Negra de visitantes?',
+    'O que é a Manutenção Preventiva?',
+    'Como abro um pedido de intervenção?',
+    'Como contactar suporte ONDAKA?',
   ];
 
   /// Inicializa o chat com mensagem de boas-vindas.
