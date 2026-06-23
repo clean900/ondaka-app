@@ -184,9 +184,15 @@ class _PagamentoFormViewState extends State<PagamentoFormView> {
       return;
     }
 
-    // 2. Gerar referência ProxyPay no último pagamento criado
-    final ultimo = controller.pagamentos.first;
-    final ref = await controller.gerarReferenciaMcx(ultimo.id);
+    // 2. Gerar referência ProxyPay no pagamento que acabou de ser criado
+    //    (id devolvido pelo submeter — não inferir por .first, ambíguo).
+    final pagamentoId = controller.ultimoPagamentoId;
+    if (pagamentoId == null) {
+      Get.snackbar('Erro', 'Não foi possível identificar o pagamento criado.',
+          backgroundColor: const Color(0xFFEF4444), colorText: Colors.white);
+      return;
+    }
+    final ref = await controller.gerarReferenciaMcx(pagamentoId);
 
     if (ref != null && mounted) {
       setState(() => _referenciaMcxGerada = ref);

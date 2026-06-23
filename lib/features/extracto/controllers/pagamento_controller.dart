@@ -21,6 +21,11 @@ class PagamentoController extends GetxController {
   final isSubmitting = false.obs;
   final erro = RxnString();
 
+  /// Id do último pagamento criado por submeter() — usado para gerar a
+  /// referência ProxyPay no pagamento certo (não inferir por .first, que
+  /// é ambíguo se dois pagamentos forem criados no mesmo segundo).
+  int? ultimoPagamentoId;
+
   @override
   void onInit() {
     super.onInit();
@@ -58,7 +63,7 @@ class PagamentoController extends GetxController {
     isSubmitting.value = true;
     erro.value = null;
     try {
-      await _repo.submeter(
+      final criado = await _repo.submeter(
         fraccaoId: fraccaoId,
         metodo: metodo,
         valor: valor,
@@ -70,6 +75,7 @@ class PagamentoController extends GetxController {
         notasCondomino: notasCondomino,
         comprovativo: comprovativo,
       );
+      ultimoPagamentoId = criado.id;
       await carregar();
       // Recarregar extracto também (saldo + movimentos)
       _recarregarExtractoSeExiste();
