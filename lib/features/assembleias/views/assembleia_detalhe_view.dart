@@ -210,6 +210,8 @@ class _AssembleiaDetalheViewState extends State<AssembleiaDetalheView> {
   Widget _botaoJitsi(AssembleiaDetalhe d) {
     return FilledButton.icon(
       onPressed: () async {
+        // Marca presença (conta para quórum/acta) antes de abrir a sala.
+        await controller.registarPresenca();
         final url = 'https://meet.jit.si/${d.assembleia.salaJitsi}';
         final uri = Uri.parse(url);
         if (await canLaunchUrl(uri)) {
@@ -225,18 +227,21 @@ class _AssembleiaDetalheViewState extends State<AssembleiaDetalheView> {
   }
 
   Widget _botaoActa(AssembleiaDetalhe d) {
-    return OutlinedButton.icon(
-      onPressed: () async {
-        final url = 'https://ondaka.ao/ficheiros/${d.assembleia.actaPath}';
-        final uri = Uri.parse(url);
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-        }
-      },
-      icon: const Icon(Icons.description),
-      label: const Text('Ver acta'),
-      style: OutlinedButton.styleFrom(
-          minimumSize: const Size.fromHeight(50)),
+    return Obx(
+      () => OutlinedButton.icon(
+        onPressed:
+            controller.isAbrindoActa.value ? null : controller.abrirActa,
+        icon: controller.isAbrindoActa.value
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.description),
+        label: Text(controller.isAbrindoActa.value ? 'A abrir…' : 'Ver acta'),
+        style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(50)),
+      ),
     );
   }
 

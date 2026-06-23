@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../../core/services/api_service.dart';
 import '../models/assembleia.dart';
@@ -32,5 +33,20 @@ class AssembleiaRepository {
       '/assembleias/$assembleiaId/pontos/$pontoId/votar',
       data: {'opcao': opcao},
     );
+  }
+
+  /// Marca presença na sala virtual (conta para quórum e acta).
+  Future<void> entrar(int assembleiaId) async {
+    await _dio.post('/assembleias/$assembleiaId/entrar');
+  }
+
+  /// Descarrega a acta (PDF autenticado) para um ficheiro temporário e
+  /// devolve o caminho local. A acta vive em disco privado no servidor,
+  /// por isso é servida pela API com auth — não por /ficheiros/.
+  Future<String> descarregarActa(int assembleiaId) async {
+    final dir = await getTemporaryDirectory();
+    final destino = '${dir.path}/acta-$assembleiaId.pdf';
+    await _dio.download('/assembleias/$assembleiaId/acta', destino);
+    return destino;
   }
 }
