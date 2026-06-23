@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../pre_aprovacoes/views/historico_visitas_view.dart';
 import '../repositories/portaria_repository.dart';
 import 'portaria_encomendas_shell_view.dart';
+import 'verificar_visitante_view.dart';
 import '../../sos_guarda/views/sos_guarda_lista_view.dart';
 import '../../sos_guarda/repositories/sos_guarda_repository.dart';
 
@@ -112,6 +113,14 @@ class HomeGuardaView extends StatelessWidget {
                       )),
                   primary: false,
                 ),
+                const SizedBox(height: 14),
+                _accaoGrande(
+                  icon: Icons.gpp_maybe_outlined,
+                  label: 'Verificar visitante',
+                  subtitle: 'Consultar a Lista Negra por BI, matrícula ou nome',
+                  onTap: () => Get.to(() => const VerificarVisitanteView()),
+                  primary: false,
+                ),
                 const SizedBox(height: 32),
 
                 // Info card
@@ -144,8 +153,7 @@ class HomeGuardaView extends StatelessWidget {
                       ),
                       SizedBox(height: 8),
                       Text(
-                        'Scanner de QR e entrada manual serão adicionados em '
-                        'próximas iterações.',
+                        'Scanner de QR será adicionado em próximas iterações.',
                         style: TextStyle(
                           color: AppColors.textMuted,
                           fontSize: 13,
