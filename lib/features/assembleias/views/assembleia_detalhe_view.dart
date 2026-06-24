@@ -212,7 +212,7 @@ class _AssembleiaDetalheViewState extends State<AssembleiaDetalheView> {
       onPressed: () async {
         // Marca presença (conta para quórum/acta) antes de abrir a sala.
         await controller.registarPresenca();
-        final url = 'https://meet.jit.si/${d.assembleia.salaJitsi}';
+        final url = 'https://video.ondaka.ao/${d.assembleia.salaJitsi}';
         final uri = Uri.parse(url);
         if (await canLaunchUrl(uri)) {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
