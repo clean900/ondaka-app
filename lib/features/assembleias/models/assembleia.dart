@@ -33,6 +33,7 @@ class Assembleia {
   final bool actaGerada;
   final String? actaPath;
   final String? salaJitsi;
+  final String? jitsiUrl; // URL completo da sala já com token JWT (entrada autenticada)
 
   Assembleia({
     required this.id,
@@ -47,6 +48,7 @@ class Assembleia {
     required this.actaGerada,
     this.actaPath,
     this.salaJitsi,
+    this.jitsiUrl,
   });
 
   factory Assembleia.fromJson(Map<String, dynamic> json) {
@@ -67,6 +69,7 @@ class Assembleia {
       actaGerada: json['acta_gerada'] == true || json['acta_gerada'] == 1,
       actaPath: json['acta_path'] as String?,
       salaJitsi: json['sala_jitsi'] as String?,
+      jitsiUrl: json['jitsi_url'] as String?,
     );
   }
 }

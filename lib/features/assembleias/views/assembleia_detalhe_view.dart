@@ -212,7 +212,9 @@ class _AssembleiaDetalheViewState extends State<AssembleiaDetalheView> {
       onPressed: () async {
         // Marca presença (conta para quórum/acta) antes de abrir a sala.
         await controller.registarPresenca();
-        final url = 'https://video.ondaka.ao/${d.assembleia.salaJitsi}';
+        // URL já com token JWT (entrada autenticada); fallback p/ URL simples.
+        final url = d.assembleia.jitsiUrl ??
+            'https://video.ondaka.ao/${d.assembleia.salaJitsi}';
         final uri = Uri.parse(url);
         if (await canLaunchUrl(uri)) {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
