@@ -12,6 +12,8 @@ import 'storage_service.dart';
 import '../../features/avisos/views/aviso_detalhe_view.dart';
 import '../../features/sos_guarda/views/sos_alarme_view.dart';
 import '../../features/sos_guarda/utils/sos_sirene.dart';
+import '../../features/chamadas/views/chamada_recebida_view.dart';
+import '../../features/chamadas/utils/chamada_ring.dart';
 
 /// Canal SOS — partilhado entre o serviço e o background handler.
 /// Importância máxima + som de sirene (res/raw/sirene_sos). Tem de existir no
@@ -26,13 +28,24 @@ const AndroidNotificationChannel canalSos = AndroidNotificationChannel(
   enableVibration: true,
 );
 
+/// Canal de chamadas de voz (portaria↔condómino). Full-screen + som default.
+const AndroidNotificationChannel canalChamada = AndroidNotificationChannel(
+  'ondaka_chamada',
+  'Chamadas',
+  description: 'Chamadas de voz entre portaria e moradores',
+  importance: Importance.max,
+  playSound: true,
+  enableVibration: true,
+);
+
 /// Handler de mensagens FCM em BACKGROUND/app fechada (isolate separado).
 /// Para SOS (data-only), constrói uma notificação full-screen que acorda o
 /// ecrã e lança o alarme vermelho mesmo com a app fechada. Tem de ser uma
 /// função top-level com @pragma('vm:entry-point').
 @pragma('vm:entry-point')
 Future<void> sosFirebaseBackgroundHandler(RemoteMessage message) async {
-  if (message.data['tipo']?.toString() != 'sos') return;
+  final tipo = message.data['tipo']?.toString();
+  if (tipo != 'sos' && tipo != 'chamada_recebida') return;
   await Firebase.initializeApp();
 
   final fln = FlutterLocalNotificationsPlugin();
@@ -41,27 +54,36 @@ Future<void> sosFirebaseBackgroundHandler(RemoteMessage message) async {
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
     ),
   );
-  await fln
-      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-      ?.createNotificationChannel(canalSos);
+  final android = fln
+      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+  await android?.createNotificationChannel(canalSos);
+  await android?.createNotificationChannel(canalChamada);
 
-  final titulo = message.data['titulo']?.toString() ?? '🚨 SOS';
-  final corpo = message.data['corpo']?.toString() ?? 'Emergência recebida';
+  final ehChamada = tipo == 'chamada_recebida';
+  final titulo = message.data['titulo']?.toString() ??
+      (ehChamada ? '📞 Chamada' : '🚨 SOS');
+  final corpo = message.data['corpo']?.toString() ??
+      (ehChamada ? 'Chamada recebida' : 'Emergência recebida');
 
   await fln.show(
-    20260618,
+    ehChamada ? 20260624 : 20260618,
     titulo,
     corpo,
     NotificationDetails(
       android: AndroidNotificationDetails(
-        canalSos.id,
-        canalSos.name,
-        channelDescription: canalSos.description,
+        ehChamada ? canalChamada.id : canalSos.id,
+        ehChamada ? canalChamada.name : canalSos.name,
+        channelDescription:
+            ehChamada ? canalChamada.description : canalSos.description,
         importance: Importance.max,
         priority: Priority.max,
-        category: AndroidNotificationCategory.alarm,
+        category: ehChamada
+            ? AndroidNotificationCategory.call
+            : AndroidNotificationCategory.alarm,
         fullScreenIntent: true,
-        sound: const RawResourceAndroidNotificationSound('sirene_sos'),
+        sound: ehChamada
+            ? null
+            : const RawResourceAndroidNotificationSound('sirene_sos'),
         icon: '@mipmap/ic_launcher',
       ),
     ),
@@ -107,7 +129,22 @@ class PushNotificationService extends GetxService {
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     await androidPlugin?.createNotificationChannel(_canal);
     await androidPlugin?.createNotificationChannel(canalSos);
+    await androidPlugin?.createNotificationChannel(canalChamada);
     _localNotifPronto = true;
+  }
+
+  /// Abre o ecrã de chamada recebida (full-screen, toca em loop).
+  void _abrirChamada(Map<String, dynamic> data) {
+    final quemLiga = data['quem_liga']?.toString() ?? 'Chamada';
+    final jitsiUrl = data['jitsi_url']?.toString();
+    final origem = data['origem']?.toString() ?? 'portaria';
+    if (jitsiUrl == null || jitsiUrl.isEmpty) return;
+    ChamadaRing.instance.tocar();
+    Get.to(() => ChamadaRecebidaView(
+          quemLiga: quemLiga,
+          jitsiUrl: jitsiUrl,
+          origem: origem,
+        ));
   }
 
   /// Abre o ecrã de alarme SOS a partir dos dados do push.
@@ -127,8 +164,11 @@ class PushNotificationService extends GetxService {
     if (payload == null || payload.isEmpty) return;
     try {
       final data = jsonDecode(payload);
-      if (data is Map && data['tipo']?.toString() == 'sos') {
-        _abrirAlarmeSos(Map<String, dynamic>.from(data));
+      final tipo = data is Map ? data['tipo']?.toString() : null;
+      if (tipo == 'sos') {
+        _abrirAlarmeSos(Map<String, dynamic>.from(data as Map));
+      } else if (tipo == 'chamada_recebida') {
+        _abrirChamada(Map<String, dynamic>.from(data as Map));
       }
     } catch (_) {
       // payload antigo (string simples) — ignora.
@@ -188,9 +228,14 @@ class PushNotificationService extends GetxService {
 
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         debugPrint('[Push] Mensagem recebida (foreground): ${message.data}');
-        // SOS em foreground → abre o alarme full-screen directamente.
-        if (message.data['tipo']?.toString() == 'sos') {
+        // SOS/Chamada em foreground → abre o ecrã full-screen directamente.
+        final tipoFg = message.data['tipo']?.toString();
+        if (tipoFg == 'sos') {
           _abrirAlarmeSos(message.data);
+          return;
+        }
+        if (tipoFg == 'chamada_recebida') {
+          _abrirChamada(message.data);
           return;
         }
         _mostrarNotificacaoLocal(message);
@@ -205,8 +250,11 @@ class PushNotificationService extends GetxService {
       // App lançada a partir de uma notificação SOS (estava fechada):
       // verifica tanto o FCM como a notificação local full-screen.
       final msgInicial = await _messaging.getInitialMessage();
-      if (msgInicial != null && msgInicial.data['tipo']?.toString() == 'sos') {
+      final tipoInicial = msgInicial?.data['tipo']?.toString();
+      if (msgInicial != null && tipoInicial == 'sos') {
         _abrirAposArranque(() => _abrirAlarmeSos(msgInicial.data));
+      } else if (msgInicial != null && tipoInicial == 'chamada_recebida') {
+        _abrirAposArranque(() => _abrirChamada(msgInicial.data));
       } else {
         final launch = await _localNotif.getNotificationAppLaunchDetails();
         if (launch?.didNotificationLaunchApp ?? false) {
@@ -233,6 +281,8 @@ class PushNotificationService extends GetxService {
       Get.to(() => AvisoDetalheView(avisoId: avisoId));
     } else if (tipo == 'sos') {
       _abrirAlarmeSos(data);
+    } else if (tipo == 'chamada_recebida') {
+      _abrirChamada(data);
     }
   }
 

@@ -5,6 +5,7 @@ import '../../pre_aprovacoes/views/historico_visitas_view.dart';
 import '../repositories/portaria_repository.dart';
 import 'portaria_encomendas_shell_view.dart';
 import 'verificar_visitante_view.dart';
+import '../../chamadas/views/ligar_condomino_view.dart';
 import '../../sos_guarda/views/sos_guarda_lista_view.dart';
 import '../../sos_guarda/repositories/sos_guarda_repository.dart';
 
@@ -119,6 +120,14 @@ class HomeGuardaView extends StatelessWidget {
                   label: 'Verificar visitante',
                   subtitle: 'Consultar a Lista Negra por BI, matrícula ou nome',
                   onTap: () => Get.to(() => const VerificarVisitanteView()),
+                  primary: false,
+                ),
+                const SizedBox(height: 14),
+                _accaoGrande(
+                  icon: Icons.call,
+                  label: 'Ligar ao morador',
+                  subtitle: 'Chamada de voz para o morador de um imóvel',
+                  onTap: () => Get.to(() => const LigarCondominoView()),
                   primary: false,
                 ),
                 const SizedBox(height: 32),
