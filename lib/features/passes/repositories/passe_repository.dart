@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../../core/services/api_service.dart';
 import '../models/passe.dart';
@@ -45,5 +46,15 @@ class PasseRepository {
 
   Future<void> estender(int id, DateTime novaData) async {
     await _dio.post('/passes/$id/estender', data: {'valida_ate': novaData.toIso8601String()});
+  }
+
+  /// Descarrega o PDF do passe (rota publica) para um ficheiro temporario e
+  /// devolve o caminho local. Download+abrir e fiavel no iOS, ao contrario de
+  /// abrir/partilhar o URL diretamente.
+  Future<String> descarregarPdf(String url, {String nome = 'passe'}) async {
+    final dir = await getTemporaryDirectory();
+    final destino = '${dir.path}/$nome.pdf';
+    await _dio.download(url, destino);
+    return destino;
   }
 }

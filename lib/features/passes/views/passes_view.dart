@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:open_file/open_file.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../controllers/passe_controller.dart';
 import '../models/passe.dart';
+import '../repositories/passe_repository.dart';
 
 class PassesView extends StatelessWidget {
   const PassesView({super.key});
@@ -80,8 +81,19 @@ class _PasseCard extends StatelessWidget {
   final Passe passe;
   const _PasseCard({required this.passe});
 
-  Future<void> _abrir(String url) async => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-  Future<void> _partilhar(String url) async => Share.shareUri(Uri.parse(url));
+  Future<void> _comPdf(Future<void> Function(String path) acao) async {
+    try {
+      final nome = 'passe-${passe.nomeVisitante.replaceAll(' ', '-')}';
+      final path = await PasseRepository().descarregarPdf(passe.pdfUrl!, nome: nome);
+      await acao(path);
+    } catch (_) {
+      Get.snackbar('Erro', 'Nao foi possivel abrir o passe.',
+          snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+
+  Future<void> _abrir() => _comPdf((p) => OpenFile.open(p));
+  Future<void> _partilhar() => _comPdf((p) => Share.shareXFiles([XFile(p)]));
 
   @override
   Widget build(BuildContext context) {
@@ -128,7 +140,7 @@ class _PasseCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => _partilhar(passe.pdfUrl!),
+                    onPressed: _partilhar,
                     icon: const Icon(Icons.share, size: 18),
                     label: const Text('Partilhar passe'),
                     style: OutlinedButton.styleFrom(foregroundColor: AppColors.cyan),
@@ -136,7 +148,7 @@ class _PasseCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 OutlinedButton(
-                  onPressed: () => _abrir(passe.pdfUrl!),
+                  onPressed: _abrir,
                   style: OutlinedButton.styleFrom(foregroundColor: AppColors.textMuted),
                   child: const Icon(Icons.download, size: 20),
                 ),
