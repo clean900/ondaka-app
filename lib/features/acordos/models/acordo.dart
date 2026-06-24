@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 double _toDouble(dynamic v) {
   if (v == null) return 0;
   if (v is num) return v.toDouble();
@@ -16,6 +18,12 @@ class Prestacao {
     required this.dataVencimento,
     required this.estado,
   });
+
+  /// Data formatada dd/MM/yyyy (a API devolve ISO bruto).
+  String get dataVencimentoFmt {
+    final d = DateTime.tryParse(dataVencimento);
+    return d != null ? DateFormat('dd/MM/yyyy').format(d.toLocal()) : dataVencimento;
+  }
 
   factory Prestacao.fromJson(Map<String, dynamic> j) => Prestacao(
         numero: j['numero'] as int? ?? 0,

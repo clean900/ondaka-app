@@ -364,7 +364,7 @@ class AcordosView extends StatelessWidget {
                 const Spacer(),
                 Text(_kz(p.valor), style: const TextStyle(color: AppColors.textMain)),
                 const SizedBox(width: 10),
-                Text(p.dataVencimento, style: TextStyle(color: cor, fontSize: 12)),
+                Text(p.dataVencimentoFmt, style: TextStyle(color: cor, fontSize: 12)),
               ]),
             );
           }),
