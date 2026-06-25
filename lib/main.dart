@@ -9,6 +9,7 @@ import 'core/services/api_service.dart';
 import 'core/services/auth_service.dart';
 import 'core/services/push_notification_service.dart';
 import 'core/services/storage_service.dart';
+import 'features/chamadas/services/webrtc_call_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,4 +40,5 @@ Future<void> _initServices() async {
   Get.put(ApiService(), permanent: true);
   Get.put(AuthService(), permanent: true);
   Get.put(PushNotificationService(), permanent: true);
+  Get.put(WebrtcCallService(), permanent: true);
 }

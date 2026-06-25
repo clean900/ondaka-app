@@ -1,61 +1,36 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/theme/app_colors.dart';
-import '../utils/chamada_ring.dart';
 
-/// Ecrã full-screen de chamada recebida (estilo SOS): toca em loop, Atender abre
-/// a sala de áudio no servidor próprio, Recusar fecha.
-class ChamadaRecebidaView extends StatefulWidget {
+/// Ecrã full-screen de chamada recebida (estilo SOS): toca em loop.
+/// Atender → arranca a chamada WebRTC; Recusar → fecha.
+/// O som e a navegação são controlados pelo WebrtcCallService.
+class ChamadaRecebidaView extends StatelessWidget {
   final String quemLiga;
-  final String jitsiUrl; // já com token (entrada autenticada)
-  final String origem; // 'portaria' ou 'condomino'
+  final String origem; // papel de quem liga: portaria / condomino / gestor
+  final VoidCallback onAtender;
+  final VoidCallback onRecusar;
   const ChamadaRecebidaView({
     super.key,
     required this.quemLiga,
-    required this.jitsiUrl,
+    required this.onAtender,
+    required this.onRecusar,
     this.origem = 'portaria',
   });
 
-  @override
-  State<ChamadaRecebidaView> createState() => _ChamadaRecebidaViewState();
-}
-
-class _ChamadaRecebidaViewState extends State<ChamadaRecebidaView> {
-  @override
-  void initState() {
-    super.initState();
-    ChamadaRing.instance.tocar();
-  }
-
-  @override
-  void dispose() {
-    ChamadaRing.instance.parar();
-    super.dispose();
-  }
-
-  Future<void> _atender() async {
-    await ChamadaRing.instance.parar();
-    // Sala de áudio (sem vídeo).
-    final url = '${widget.jitsiUrl}#config.startAudioOnly=true&config.startWithVideoMuted=true';
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+  String get _subtitulo {
+    switch (origem) {
+      case 'condomino':
+        return 'Morador a ligar';
+      case 'gestor':
+        return 'Gestor a ligar';
+      default:
+        return 'Portaria a ligar';
     }
-    if (mounted) Get.back();
-  }
-
-  Future<void> _recusar() async {
-    await ChamadaRing.instance.parar();
-    if (mounted) Get.back();
   }
 
   @override
   Widget build(BuildContext context) {
-    final subtitulo = widget.origem == 'condomino'
-        ? 'Morador a ligar'
-        : 'Portaria a ligar';
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -76,11 +51,11 @@ class _ChamadaRecebidaViewState extends State<ChamadaRecebidaView> {
                   child: const Icon(Icons.call, color: Colors.white, size: 56),
                 ),
                 const SizedBox(height: 28),
-                Text(subtitulo,
+                Text(_subtitulo,
                     style: const TextStyle(color: AppColors.textMuted, fontSize: 14, letterSpacing: 1)),
                 const SizedBox(height: 8),
                 Text(
-                  widget.quemLiga,
+                  quemLiga,
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: AppColors.textMain, fontSize: 26, fontWeight: FontWeight.w700),
                 ),
@@ -92,13 +67,13 @@ class _ChamadaRecebidaViewState extends State<ChamadaRecebidaView> {
                       cor: AppColors.danger,
                       icon: Icons.call_end,
                       label: 'Recusar',
-                      onTap: _recusar,
+                      onTap: onRecusar,
                     ),
                     _botao(
                       cor: AppColors.success,
                       icon: Icons.call,
                       label: 'Atender',
-                      onTap: _atender,
+                      onTap: onAtender,
                     ),
                   ],
                 ),

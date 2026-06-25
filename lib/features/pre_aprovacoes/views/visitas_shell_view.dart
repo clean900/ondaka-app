@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/theme/app_colors.dart';
-import '../../chamadas/repositories/chamada_repository.dart';
+import '../../chamadas/views/ligar_view.dart';
 import '../../passes/views/passes_view.dart';
 import '../repositories/pre_aprovacao_repository.dart';
 import 'criar_pre_aprovacao_view.dart';
@@ -23,26 +22,6 @@ class VisitasShellView extends StatefulWidget {
 class _VisitasShellViewState extends State<VisitasShellView>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
-  bool _aLigar = false;
-
-  Future<void> _ligarPortaria() async {
-    setState(() => _aLigar = true);
-    try {
-      final url = await ChamadaRepository().ligarPortaria();
-      final audio = '$url#config.startAudioOnly=true&config.startWithVideoMuted=true';
-      final uri = Uri.parse(audio);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-    } on Object catch (e) {
-      final msg = e.toString().contains('422')
-          ? 'Não há portaria de serviço disponível.'
-          : 'Não foi possível ligar à portaria.';
-      Get.snackbar('Chamada', msg, snackPosition: SnackPosition.BOTTOM);
-    } finally {
-      if (mounted) setState(() => _aLigar = false);
-    }
-  }
 
   @override
   void initState() {
@@ -64,19 +43,14 @@ class _VisitasShellViewState extends State<VisitasShellView>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bgDark,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Get.to(() => const LigarView()),
+        backgroundColor: AppColors.cyan,
+        icon: const Icon(Icons.call, color: Colors.white),
+        label: const Text('Ligar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+      ),
       appBar: AppBar(
         title: const Text('Visitas'),
-        actions: [
-          IconButton(
-            tooltip: 'Ligar à portaria',
-            icon: _aLigar
-                ? const SizedBox(
-                    width: 20, height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.cyan))
-                : const Icon(Icons.call, color: AppColors.cyan),
-            onPressed: _aLigar ? null : _ligarPortaria,
-          ),
-        ],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: AppColors.cyan,

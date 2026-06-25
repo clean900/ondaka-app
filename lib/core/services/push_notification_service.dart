@@ -12,8 +12,7 @@ import 'storage_service.dart';
 import '../../features/avisos/views/aviso_detalhe_view.dart';
 import '../../features/sos_guarda/views/sos_alarme_view.dart';
 import '../../features/sos_guarda/utils/sos_sirene.dart';
-import '../../features/chamadas/views/chamada_recebida_view.dart';
-import '../../features/chamadas/utils/chamada_ring.dart';
+import '../../features/chamadas/services/webrtc_call_service.dart';
 
 /// Canal SOS — partilhado entre o serviço e o background handler.
 /// Importância máxima + som de sirene (res/raw/sirene_sos). Tem de existir no
@@ -133,18 +132,10 @@ class PushNotificationService extends GetxService {
     _localNotifPronto = true;
   }
 
-  /// Abre o ecrã de chamada recebida (full-screen, toca em loop).
+  /// Chamada de voz recebida (modo=webrtc): delega no serviço WebRTC, que
+  /// mostra o ecrã full-screen a tocar e trata da negociação ao atender.
   void _abrirChamada(Map<String, dynamic> data) {
-    final quemLiga = data['quem_liga']?.toString() ?? 'Chamada';
-    final jitsiUrl = data['jitsi_url']?.toString();
-    final origem = data['origem']?.toString() ?? 'portaria';
-    if (jitsiUrl == null || jitsiUrl.isEmpty) return;
-    ChamadaRing.instance.tocar();
-    Get.to(() => ChamadaRecebidaView(
-          quemLiga: quemLiga,
-          jitsiUrl: jitsiUrl,
-          origem: origem,
-        ));
+    WebrtcCallService.to.receber(Map<String, dynamic>.from(data));
   }
 
   /// Abre o ecrã de alarme SOS a partir dos dados do push.
