@@ -73,6 +73,8 @@
 		<string>A ONDAKA usa a sua localização para enviar a posição em alertas de emergência SOS.</string>
 		<key>NSCameraUsageDescription</key>
 		<string>A ONDAKA usa a câmara para ler códigos QR na portaria e anexar fotos a pedidos.</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>A ONDAKA usa o microfone nas assembleias por vídeo e nas chamadas com a portaria.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>A ONDAKA acede às suas fotos para anexar imagens a pedidos, comprovativos e documentos.</string>
 		<!-- Push em background (FCM) — necessário para os alertas SOS -->

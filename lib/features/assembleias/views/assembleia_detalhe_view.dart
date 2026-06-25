@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../controllers/assembleia_detalhe_controller.dart';
 import '../models/assembleia.dart';
+import 'jitsi_webview_view.dart';
 
 class AssembleiaDetalheView extends StatefulWidget {
   final int assembleiaId;
@@ -215,10 +215,8 @@ class _AssembleiaDetalheViewState extends State<AssembleiaDetalheView> {
         // URL já com token JWT (entrada autenticada); fallback p/ URL simples.
         final url = d.assembleia.jitsiUrl ??
             'https://video.ondaka.ao/${d.assembleia.salaJitsi}';
-        final uri = Uri.parse(url);
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-        }
+        // Abre a sala DENTRO da app (WebView interno), não no browser.
+        Get.to(() => JitsiWebViewView(url: url, titulo: 'Assembleia'));
       },
       icon: const Icon(Icons.videocam),
       label: const Text('Entrar na sala virtual'),
