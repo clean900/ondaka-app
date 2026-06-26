@@ -49,6 +49,8 @@ class WebrtcCallService extends GetxService {
 
   bool _souChamador = false;
   bool _ofertaEnviada = false;
+  bool _remotoDefinido = false; // setRemoteDescription já feito?
+  final List<RTCIceCandidate> _icePendentes = []; // candidatos chegados antes do remoto
 
   /// Há uma chamada activa (a ligar, a receber ou em curso)?
   bool get activa => estado.value != EstadoChamada.inactiva &&
@@ -209,6 +211,7 @@ class WebrtcCallService extends GetxService {
           await _pc!.setRemoteDescription(
             RTCSessionDescription(msg['sdp']?.toString(), 'offer'),
           );
+          await _aplicarIcePendentes();
           final answer = await _pc!.createAnswer({});
           await _pc!.setLocalDescription(answer);
           _enviar({'type': 'answer', 'sdp': answer.sdp});
@@ -220,19 +223,26 @@ class WebrtcCallService extends GetxService {
           await _pc!.setRemoteDescription(
             RTCSessionDescription(msg['sdp']?.toString(), 'answer'),
           );
+          await _aplicarIcePendentes();
         }
         break;
 
       case 'ice':
         final cand = msg['candidate'];
         if (cand != null) {
-          await _pc!.addCandidate(RTCIceCandidate(
+          final ice = RTCIceCandidate(
             cand.toString(),
             msg['sdpMid']?.toString(),
             msg['sdpMLineIndex'] is int
                 ? msg['sdpMLineIndex'] as int
                 : int.tryParse(msg['sdpMLineIndex']?.toString() ?? ''),
-          ));
+          );
+          // Só se pode aplicar depois do setRemoteDescription; senão guarda.
+          if (_remotoDefinido) {
+            await _pc!.addCandidate(ice);
+          } else {
+            _icePendentes.add(ice);
+          }
         }
         break;
 
@@ -241,6 +251,17 @@ class WebrtcCallService extends GetxService {
         desligar();
         break;
     }
+  }
+
+  /// Marca o remoto como definido e aplica os candidatos ICE que chegaram antes.
+  Future<void> _aplicarIcePendentes() async {
+    _remotoDefinido = true;
+    for (final ice in _icePendentes) {
+      try {
+        await _pc!.addCandidate(ice);
+      } catch (_) {}
+    }
+    _icePendentes.clear();
   }
 
   Future<void> _enviarOferta() async {
@@ -326,6 +347,8 @@ class WebrtcCallService extends GetxService {
     _pc = null;
     _souChamador = false;
     _ofertaEnviada = false;
+    _remotoDefinido = false;
+    _icePendentes.clear();
     mudo.value = false;
     altifalante.value = false;
     duracao.value = 0;

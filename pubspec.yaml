@@ -55,6 +55,7 @@ dependencies:
   flutter_inappwebview: ^6.1.5
   flutter_webrtc: ^0.12.5
   web_socket_channel: ^3.0.1
+  flutter_ringtone_player: ^4.0.0+3
 
 dev_dependencies:
   flutter_test:

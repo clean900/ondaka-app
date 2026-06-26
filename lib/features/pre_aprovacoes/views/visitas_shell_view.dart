@@ -45,7 +45,7 @@ class _VisitasShellViewState extends State<VisitasShellView>
       backgroundColor: AppColors.bgDark,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Get.to(() => const LigarView()),
-        backgroundColor: AppColors.cyan,
+        backgroundColor: AppColors.success,
         icon: const Icon(Icons.call, color: Colors.white),
         label: const Text('Ligar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
       ),

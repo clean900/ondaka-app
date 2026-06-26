@@ -1,20 +1,19 @@
-import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 
 /// Toque de chamada recebida (loop até atender/recusar). Singleton.
-/// TODO: trocar 'audio/sirene.mp3' por um ringtone próprio (assets/audio/toque_chamada.mp3).
+/// Usa o toque genérico do próprio sistema (não a sirene do SOS).
 class ChamadaRing {
   ChamadaRing._();
   static final ChamadaRing instance = ChamadaRing._();
 
-  final AudioPlayer _player = AudioPlayer();
+  final FlutterRingtonePlayer _player = FlutterRingtonePlayer();
   bool aTocar = false;
 
   Future<void> tocar() async {
     if (aTocar) return;
     aTocar = true;
     try {
-      await _player.setReleaseMode(ReleaseMode.loop);
-      await _player.play(AssetSource('audio/sirene.mp3'), volume: 0.7);
+      await _player.playRingtone(looping: true);
     } catch (_) {
       aTocar = false;
     }
