@@ -13,6 +13,7 @@ import '../../features/avisos/views/aviso_detalhe_view.dart';
 import '../../features/sos_guarda/views/sos_alarme_view.dart';
 import '../../features/sos_guarda/utils/sos_sirene.dart';
 import '../../features/chamadas/services/webrtc_call_service.dart';
+import '../../features/chamadas/utils/chamada_callkit.dart';
 
 /// Canal SOS — partilhado entre o serviço e o background handler.
 /// Importância máxima + som de sirene (res/raw/sirene_sos). Tem de existir no
@@ -46,6 +47,13 @@ Future<void> sosFirebaseBackgroundHandler(RemoteMessage message) async {
   final tipo = message.data['tipo']?.toString();
   if (tipo != 'sos' && tipo != 'chamada_recebida') return;
   await Firebase.initializeApp();
+
+  // Chamada de voz → UI nativa de chamada (CallKit/ConnectionService): toca como
+  // uma chamada a sério, mesmo com a app fechada. Atender arranca o WebRTC.
+  if (tipo == 'chamada_recebida') {
+    await mostrarChamadaCallkit(Map<String, dynamic>.from(message.data));
+    return;
+  }
 
   final fln = FlutterLocalNotificationsPlugin();
   await fln.initialize(

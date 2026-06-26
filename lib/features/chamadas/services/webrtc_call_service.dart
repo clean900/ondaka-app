@@ -2,14 +2,15 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_callkit_incoming/entities/entities.dart';
+import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:get/get.dart' hide navigator;
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../repositories/chamada_repository.dart';
-import '../utils/chamada_ring.dart';
+import '../utils/chamada_callkit.dart';
 import '../views/chamada_em_curso_view.dart';
-import '../views/chamada_recebida_view.dart';
 
 /// Estado da chamada de voz WebRTC.
 enum EstadoChamada {
@@ -56,6 +57,45 @@ class WebrtcCallService extends GetxService {
   bool get activa => estado.value != EstadoChamada.inactiva &&
       estado.value != EstadoChamada.terminada;
 
+  @override
+  void onInit() {
+    super.onInit();
+    // Eventos da UI nativa de chamada (atender/recusar), inclusive em arranque
+    // a frio quando o utilizador atende a partir do ecrã de chamada do sistema.
+    FlutterCallkitIncoming.onEvent.listen(_onCallkitEvent);
+  }
+
+  Future<void> _onCallkitEvent(CallEvent? event) async {
+    if (event == null) return;
+    switch (event.event) {
+      case Event.actionCallAccept:
+        final extra = _extraDoEvento(event);
+        if (extra != null) await _atenderNativo(extra);
+        break;
+      case Event.actionCallDecline:
+      case Event.actionCallEnded:
+      case Event.actionCallTimeout:
+        if (estado.value == EstadoChamada.emCurso ||
+            estado.value == EstadoChamada.aLigarPeer) {
+          await desligar();
+        } else {
+          estado.value = EstadoChamada.inactiva;
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
+  Map<String, dynamic>? _extraDoEvento(CallEvent e) {
+    try {
+      final body = e.body;
+      final extra = (body is Map) ? body['extra'] : null;
+      if (extra is Map) return Map<String, dynamic>.from(extra);
+    } catch (_) {}
+    return null;
+  }
+
   // ---------------------------------------------------------------------------
   // CHAMADOR — inicia uma chamada (POST /chamadas) e abre o ecrã em curso.
   // ---------------------------------------------------------------------------
@@ -79,7 +119,8 @@ class WebrtcCallService extends GetxService {
   }
 
   // ---------------------------------------------------------------------------
-  // RECETOR — chega um push (modo=webrtc): mostra o ecrã a tocar.
+  // RECETOR — chega um push (modo=webrtc): mostra a UI nativa de chamada (toca
+  // mesmo com a app fechada). A negociação arranca quando o utilizador atende.
   // ---------------------------------------------------------------------------
   void receber(Map<String, dynamic> data) {
     if (activa) return; // já em chamada → ignora (ocupado)
@@ -87,6 +128,22 @@ class WebrtcCallService extends GetxService {
     final signalingUrl = data['signaling_url']?.toString();
     final iceRaw = data['ice_servers']?.toString();
     if (room == null || signalingUrl == null || iceRaw == null) return;
+
+    nomeOutro.value = data['quem_liga']?.toString() ?? 'Chamada';
+    estado.value = EstadoChamada.aReceber;
+    mostrarChamadaCallkit(data);
+  }
+
+  /// Utilizador atendeu na UI nativa → reconstrói a chamada a partir de `extra`
+  /// e arranca a negociação WebRTC.
+  Future<void> _atenderNativo(Map<String, dynamic> data) async {
+    if (estado.value == EstadoChamada.emCurso ||
+        estado.value == EstadoChamada.aLigarPeer) {
+      return;
+    }
+    final signalingUrl = data['signaling_url']?.toString();
+    final iceRaw = data['ice_servers']?.toString();
+    if (signalingUrl == null || iceRaw == null) return;
 
     List<Map<String, dynamic>> ice;
     try {
@@ -97,21 +154,7 @@ class WebrtcCallService extends GetxService {
 
     _souChamador = false;
     nomeOutro.value = data['quem_liga']?.toString() ?? 'Chamada';
-    estado.value = EstadoChamada.aReceber;
-
-    ChamadaRing.instance.tocar();
-    Get.to(() => ChamadaRecebidaView(
-          quemLiga: nomeOutro.value,
-          origem: data['origem']?.toString() ?? 'portaria',
-          onAtender: () => _atender(signalingUrl, ice),
-          onRecusar: desligar,
-        ));
-  }
-
-  /// Recetor carregou em "Atender" → arranca a negociação.
-  Future<void> _atender(String signalingUrl, List<Map<String, dynamic>> ice) async {
-    await ChamadaRing.instance.parar();
-    Get.off(() => const ChamadaEmCursoView());
+    Get.to(() => const ChamadaEmCursoView());
     await _arrancar(signalingUrl: signalingUrl, iceServers: ice);
   }
 
@@ -313,11 +356,10 @@ class WebrtcCallService extends GetxService {
     }
     estado.value = EstadoChamada.terminada;
     _enviar({'type': 'hangup'});
-    await ChamadaRing.instance.parar();
+    await terminarChamadaCallkit(); // dispensa a UI nativa, se ainda visível
     _limpar();
-    // Fecha o ecrã de chamada (em curso ou a tocar) se ainda estiver aberto.
-    final rota = Get.currentRoute;
-    if (rota.contains('ChamadaEmCurso') || rota.contains('ChamadaRecebida')) {
+    // Fecha o ecrã de chamada em curso, se ainda estiver aberto.
+    if (Get.currentRoute.contains('ChamadaEmCurso')) {
       Get.back();
     }
     estado.value = EstadoChamada.inactiva;
