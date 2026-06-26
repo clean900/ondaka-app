@@ -5,6 +5,7 @@ import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/storage_service.dart';
+import '../../chamadas/views/ligar_view.dart';
 import '../../sos_gestor/repositories/sos_gestor_repository.dart';
 import '../../sos_gestor/views/sos_gestor_lista_view.dart';
 
@@ -63,6 +64,48 @@ class HomeGestorView extends StatelessWidget {
 
                 // === Card SOS (PRIORIDADE MÁXIMA) ===
                 _SosGestorCard(),
+                const SizedBox(height: 14),
+
+                // === Card Chamada de voz ===
+                InkWell(
+                  onTap: () => Get.to(() => const LigarView()),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface.withValues(alpha: 0.4),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.success.withValues(alpha: 0.3), width: 1.2),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: AppColors.success.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(Icons.call, color: AppColors.success, size: 28),
+                        ),
+                        const SizedBox(width: 14),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Fazer chamada',
+                                  style: TextStyle(color: AppColors.textMain, fontSize: 16, fontWeight: FontWeight.w700)),
+                              SizedBox(height: 4),
+                              Text('Ligar à portaria ou a um morador',
+                                  style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right, color: AppColors.textMuted),
+                      ],
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 14),
 
                 // === Info card ===
