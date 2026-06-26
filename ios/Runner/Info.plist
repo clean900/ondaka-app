@@ -82,6 +82,7 @@
 		<array>
 			<string>remote-notification</string>
 			<string>fetch</string>
+			<string>voip</string>
 		</array>
 		<key>UIStatusBarHidden</key>
 		<false/>

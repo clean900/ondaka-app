@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 
 import 'package:dio/dio.dart';
+import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -300,6 +302,31 @@ class PushNotificationService extends GetxService {
   Future<void> registarApoUsLogin() async {
     if (_fcmToken != null) {
       await _registarTokenNoBackend(_fcmToken!);
+    }
+    registarVoipTokenSeIos();
+  }
+
+  /// iOS: regista o token VoIP (PushKit) no backend, para receber chamadas
+  /// com a app fechada via push VoIP/APNs. O token chega de forma assíncrona
+  /// (PushKit), por isso tentamos algumas vezes até estar disponível.
+  Future<void> registarVoipTokenSeIos() async {
+    if (!Platform.isIOS) return;
+    for (var i = 0; i < 6; i++) {
+      try {
+        final token = (await FlutterCallkitIncoming.getDevicePushTokenVoIP())?.toString() ?? '';
+        if (token.isNotEmpty) {
+          await ApiService.to.dio.post(
+            '/devices/register-fcm-token',
+            data: {'token': token, 'platform': 'ios-voip'},
+          );
+          debugPrint('[Push] Token VoIP registado no backend.');
+          return;
+        }
+      } on DioException catch (e) {
+        debugPrint('[Push] Erro a registar token VoIP: ${e.message}');
+        return;
+      } catch (_) {}
+      await Future.delayed(const Duration(seconds: 2));
     }
   }
 
