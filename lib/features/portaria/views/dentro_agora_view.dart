@@ -285,7 +285,9 @@ class DentroAgoraView extends StatelessWidget {
       itens = null;
     }
 
-    if (itens != null && itens.any((i) => i.estaDentro)) {
+    // Add-on activo (itens != null, mesmo que vazio) → abre sempre o ecrã de
+    // saída, que tem a reconciliação e o botão "Item não declarado".
+    if (itens != null) {
       final ok = await Get.to<bool>(
         () => ItensVisitaView(visita: visita, modo: ModoItens.saida),
       );
