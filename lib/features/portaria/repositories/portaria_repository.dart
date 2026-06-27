@@ -175,6 +175,30 @@ class PortariaRepository {
     }
   }
 
+  /// Regista um item NÃO declarado à entrada, detectado na saída (anomalia).
+  Future<VisitaItem> registarItemNaoDeclarado(
+    int visitaId, {
+    required String descricao,
+    int quantidade = 1,
+    String? identificador,
+    String? observacoes,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/portaria/visitas/$visitaId/itens/nao-declarado',
+        data: {
+          'descricao': descricao,
+          'quantidade': quantidade,
+          if (identificador != null && identificador.isNotEmpty) 'identificador': identificador,
+          if (observacoes != null && observacoes.isNotEmpty) 'observacoes': observacoes,
+        },
+      );
+      return VisitaItem.fromJson(response.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _mapearAddon(e);
+    }
+  }
+
   /// Reconcilia um item na saída: resolucao = 'saiu' ou 'ficou'.
   Future<VisitaItem> resolverItem(
     int visitaId,

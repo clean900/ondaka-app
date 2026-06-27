@@ -109,6 +109,16 @@ class _ItensVisitaViewState extends State<ItensVisitaView> {
                   itemBuilder: (_, i) => _itemCard(_itens[i]),
                 ),
         ),
+        if (_ehSaida)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            child: TextButton.icon(
+              onPressed: _aProcessar ? null : () => _abrirFormAdicionar(naoDeclarado: true),
+              icon: const Icon(Icons.report_problem_outlined, size: 18, color: AppColors.warningSoft),
+              label: const Text('Item não declarado à entrada',
+                  style: TextStyle(color: AppColors.warningSoft, fontWeight: FontWeight.w600)),
+            ),
+          ),
         if (_ehSaida) _barraConfirmarSaida(),
       ],
     );
@@ -170,6 +180,11 @@ class _ItensVisitaViewState extends State<ItensVisitaView> {
                       const SizedBox(height: 2),
                       Text(item.identificador!,
                           style: const TextStyle(color: AppColors.textFaint, fontSize: 12)),
+                    ],
+                    if (!item.registadoNaEntrada) ...[
+                      const SizedBox(height: 2),
+                      const Text('⚠ Não declarado à entrada',
+                          style: TextStyle(color: AppColors.warningSoft, fontSize: 11, fontWeight: FontWeight.w600)),
                     ],
                   ],
                 ),
@@ -334,7 +349,7 @@ class _ItensVisitaViewState extends State<ItensVisitaView> {
     }
   }
 
-  void _abrirFormAdicionar() {
+  void _abrirFormAdicionar({bool naoDeclarado = false}) {
     final descricao = TextEditingController();
     final quantidade = TextEditingController(text: '1');
     final identificador = TextEditingController();
@@ -356,7 +371,13 @@ class _ItensVisitaViewState extends State<ItensVisitaView> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Novo item', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+              Text(naoDeclarado ? 'Item não declarado à entrada' : 'Novo item',
+                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+              if (naoDeclarado) ...[
+                const SizedBox(height: 6),
+                const Text('Será registado como anomalia e o gestor é notificado.',
+                    style: TextStyle(color: AppColors.warningSoft, fontSize: 12)),
+              ],
               const SizedBox(height: 16),
               _campo(descricao, 'Descrição', hint: 'Ex.: Computador portátil',
                   validator: (v) => (v == null || v.trim().length < 2) ? 'Indique a descrição' : null),
@@ -384,14 +405,16 @@ class _ItensVisitaViewState extends State<ItensVisitaView> {
                       descricao.text.trim(),
                       int.tryParse(quantidade.text.trim()) ?? 1,
                       identificador.text.trim(),
+                      naoDeclarado: naoDeclarado,
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.cyan,
+                    backgroundColor: naoDeclarado ? AppColors.warning : AppColors.cyan,
                     foregroundColor: Colors.black,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Registar item', style: TextStyle(fontWeight: FontWeight.w700)),
+                  child: Text(naoDeclarado ? 'Registar anomalia' : 'Registar item',
+                      style: const TextStyle(fontWeight: FontWeight.w700)),
                 ),
               ),
             ],
@@ -425,17 +448,26 @@ class _ItensVisitaViewState extends State<ItensVisitaView> {
     );
   }
 
-  Future<void> _adicionar(String descricao, int quantidade, String identificador) async {
+  Future<void> _adicionar(String descricao, int quantidade, String identificador,
+      {bool naoDeclarado = false}) async {
     setState(() => _aProcessar = true);
     try {
-      final item = await _repo.registarItem(
-        widget.visita.id,
-        descricao: descricao,
-        quantidade: quantidade < 1 ? 1 : quantidade,
-        identificador: identificador,
-      );
+      final item = naoDeclarado
+          ? await _repo.registarItemNaoDeclarado(
+              widget.visita.id,
+              descricao: descricao,
+              quantidade: quantidade < 1 ? 1 : quantidade,
+              identificador: identificador,
+            )
+          : await _repo.registarItem(
+              widget.visita.id,
+              descricao: descricao,
+              quantidade: quantidade < 1 ? 1 : quantidade,
+              identificador: identificador,
+            );
       if (!mounted) return;
       setState(() => _itens.add(item));
+      if (naoDeclarado) _snack('Anomalia registada. Gestor notificado.');
     } catch (e) {
       _snack('Não foi possível registar o item.');
     } finally {

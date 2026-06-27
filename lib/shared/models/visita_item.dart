@@ -10,6 +10,7 @@ class VisitaItem {
   final int quantidade;
   final String? identificador;
   final String estado; // dentro | saiu | ficou
+  final bool registadoNaEntrada;
   final String? observacoes;
 
   VisitaItem({
@@ -20,6 +21,7 @@ class VisitaItem {
     required this.quantidade,
     this.identificador,
     required this.estado,
+    this.registadoNaEntrada = true,
     this.observacoes,
   });
 
@@ -32,6 +34,7 @@ class VisitaItem {
       quantidade: (json['quantidade'] as num?)?.toInt() ?? 1,
       identificador: json['identificador'] as String?,
       estado: (json['estado'] as String?) ?? 'dentro',
+      registadoNaEntrada: json['registado_na_entrada'] as bool? ?? true,
       observacoes: json['observacoes'] as String?,
     );
   }
