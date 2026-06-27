@@ -3,7 +3,10 @@ import 'package:get/get.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../../../shared/models/visita.dart';
+import '../../../shared/models/visita_item.dart';
 import '../controllers/dentro_agora_controller.dart';
+import '../repositories/portaria_repository.dart';
+import 'itens_visita_view.dart';
 
 /// Ecrã "Quem está dentro agora".
 ///
@@ -271,6 +274,27 @@ class DentroAgoraView extends StatelessWidget {
     DentroAgoraController controller,
     Visita visita,
   ) async {
+    // Add-on Controlo de Bens: se activo e houver itens por resolver, encaminha
+    // para a reconciliação. Caso contrário (add-on off ou sem itens), saída normal.
+    List<VisitaItem>? itens;
+    try {
+      itens = await PortariaRepository().listarItens(visita.id);
+    } on AddonInativoException {
+      itens = null;
+    } catch (_) {
+      itens = null;
+    }
+
+    if (itens != null && itens.any((i) => i.estaDentro)) {
+      final ok = await Get.to<bool>(
+        () => ItensVisitaView(visita: visita, modo: ModoItens.saida),
+      );
+      if (ok == true) {
+        controller.visitas.removeWhere((v) => v.id == visita.id);
+      }
+      return;
+    }
+
     final confirm = await Get.defaultDialog<bool>(
       title: 'Marcar saída',
       titleStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),

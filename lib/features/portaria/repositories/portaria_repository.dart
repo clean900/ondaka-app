@@ -3,6 +3,13 @@ import 'package:dio/dio.dart';
 import '../../../core/services/api_service.dart';
 import '../../../shared/models/historico_visitas_page.dart';
 import '../../../shared/models/visita.dart';
+import '../../../shared/models/visita_item.dart';
+
+/// Lançada quando o add-on Controlo de Bens não está activo (HTTP 402).
+class AddonInativoException implements Exception {
+  final String mensagem;
+  AddonInativoException(this.mensagem);
+}
 
 /// Repository responsável pelas chamadas HTTP relacionadas com operações
 /// de portaria (lado do guarda).
@@ -122,5 +129,90 @@ class PortariaRepository {
     return '${dt.year.toString().padLeft(4, '0')}-'
         '${dt.month.toString().padLeft(2, '0')}-'
         '${dt.day.toString().padLeft(2, '0')}';
+  }
+
+  // ===========================================================================
+  // Add-on Controlo de Bens — itens da visita
+  // ===========================================================================
+
+  /// Lista os itens registados numa visita.
+  /// Lança [AddonInativoException] se o add-on não estiver activo (402).
+  Future<List<VisitaItem>> listarItens(int visitaId) async {
+    try {
+      final response = await _dio.get('/portaria/visitas/$visitaId/itens');
+      return (response.data['data'] as List)
+          .cast<Map<String, dynamic>>()
+          .map(VisitaItem.fromJson)
+          .toList();
+    } on DioException catch (e) {
+      throw _mapearAddon(e);
+    }
+  }
+
+  /// Regista um item à entrada da visita.
+  Future<VisitaItem> registarItem(
+    int visitaId, {
+    required String descricao,
+    int quantidade = 1,
+    String? categoria,
+    String? identificador,
+    String? observacoes,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/portaria/visitas/$visitaId/itens',
+        data: {
+          'descricao': descricao,
+          'quantidade': quantidade,
+          if (categoria != null && categoria.isNotEmpty) 'categoria': categoria,
+          if (identificador != null && identificador.isNotEmpty) 'identificador': identificador,
+          if (observacoes != null && observacoes.isNotEmpty) 'observacoes': observacoes,
+        },
+      );
+      return VisitaItem.fromJson(response.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _mapearAddon(e);
+    }
+  }
+
+  /// Reconcilia um item na saída: resolucao = 'saiu' ou 'ficou'.
+  Future<VisitaItem> resolverItem(
+    int visitaId,
+    int itemId, {
+    required String resolucao,
+    String? observacoes,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/portaria/visitas/$visitaId/itens/$itemId/saida',
+        data: {
+          'resolucao': resolucao,
+          if (observacoes != null && observacoes.isNotEmpty) 'observacoes': observacoes,
+        },
+      );
+      return VisitaItem.fromJson(response.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _mapearAddon(e);
+    }
+  }
+
+  /// Remove um item registado por engano (só enquanto estiver 'dentro').
+  Future<void> removerItem(int visitaId, int itemId) async {
+    try {
+      await _dio.delete('/portaria/visitas/$visitaId/itens/$itemId');
+    } on DioException catch (e) {
+      throw _mapearAddon(e);
+    }
+  }
+
+  Exception _mapearAddon(DioException e) {
+    if (e.response?.statusCode == 402) {
+      final msg = e.response?.data is Map
+          ? (e.response!.data['message']?.toString() ??
+              'Add-on Controlo de Bens não activo.')
+          : 'Add-on Controlo de Bens não activo.';
+      return AddonInativoException(msg);
+    }
+    return e;
   }
 }

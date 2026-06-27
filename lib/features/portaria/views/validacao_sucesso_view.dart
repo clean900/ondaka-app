@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../../../shared/models/visita.dart';
+import '../repositories/portaria_repository.dart';
+import 'itens_visita_view.dart';
 
 /// Ecrã mostrado após validação bem-sucedida.
 /// Guarda vê info do visitante autorizado.
@@ -101,7 +104,12 @@ class ValidacaoSucessoView extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 16),
+
+          // Add-on Controlo de Bens: botão só aparece se o add-on estiver activo.
+          _BotaoRegistarItens(visita: visita),
+
+          const SizedBox(height: 16),
 
           // Botão próximo
           SizedBox(
@@ -200,5 +208,55 @@ class ValidacaoSucessoView extends StatelessWidget {
     final min = dt.minute.toString().padLeft(2, '0');
     final seg = dt.second.toString().padLeft(2, '0');
     return '$hora:$min:$seg';
+  }
+}
+
+/// Botão "Registar itens" — só aparece se o add-on Controlo de Bens estiver
+/// activo para a empresa (sonda o endpoint; 402 → esconde).
+class _BotaoRegistarItens extends StatefulWidget {
+  final Visita visita;
+  const _BotaoRegistarItens({required this.visita});
+
+  @override
+  State<_BotaoRegistarItens> createState() => _BotaoRegistarItensState();
+}
+
+class _BotaoRegistarItensState extends State<_BotaoRegistarItens> {
+  bool _activo = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _verificar();
+  }
+
+  Future<void> _verificar() async {
+    try {
+      await PortariaRepository().listarItens(widget.visita.id);
+      if (mounted) setState(() => _activo = true);
+    } catch (_) {
+      // AddonInativoException ou erro → mantém escondido
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_activo) return const SizedBox.shrink();
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: OutlinedButton.icon(
+        onPressed: () => Get.to(
+          () => ItensVisitaView(visita: widget.visita, modo: ModoItens.entrada),
+        ),
+        icon: const Icon(Icons.inventory_2_outlined, color: AppColors.cyanSoft),
+        label: const Text('Registar itens trazidos',
+            style: TextStyle(color: AppColors.cyanSoft, fontWeight: FontWeight.w700)),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: AppColors.cyan.withValues(alpha: 0.5)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
+    );
   }
 }
