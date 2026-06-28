@@ -40,6 +40,7 @@ class Visita {
   final MetodoValidacao metodoValidacao;
   final String? observacoes;
   final String? matricula;
+  final String? fotoEntradaPath;
 
   // Relações opcionais (quando backend as carregou via with())
   final Visitante? visitante;
@@ -58,9 +59,16 @@ class Visita {
     required this.metodoValidacao,
     this.observacoes,
     this.matricula,
+    this.fotoEntradaPath,
     this.visitante,
     this.fraccao,
   });
+
+  /// URL pública da foto de entrada (add-on foto_conferencia), ou null.
+  String? get fotoEntradaUrl =>
+      (fotoEntradaPath != null && fotoEntradaPath!.isNotEmpty)
+          ? 'https://ondaka.ao/ficheiros/$fotoEntradaPath'
+          : null;
 
   factory Visita.fromJson(Map<String, dynamic> json) {
     return Visita(
@@ -78,6 +86,7 @@ class Visita {
       metodoValidacao: MetodoValidacao.fromString(json['metodo_validacao'] as String),
       observacoes: json['observacoes'] as String?,
       matricula: json['matricula'] as String?,
+      fotoEntradaPath: json['foto_entrada_path'] as String?,
       visitante: json['visitante'] != null
           ? Visitante.fromJson(json['visitante'] as Map<String, dynamic>)
           : null,

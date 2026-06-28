@@ -150,6 +150,18 @@ class PortariaRepository {
     return Visita.fromJson(r.data['data'] as Map<String, dynamic>);
   }
 
+  /// Tira/regista a foto do visitante na entrada (add-on foto_conferencia).
+  Future<Visita> registarFotoEntrada(int visitaId, File foto) async {
+    final form = FormData.fromMap({
+      'foto': await MultipartFile.fromFile(
+        foto.path,
+        filename: 'visita_${visitaId}_${foto.path.split('/').last}',
+      ),
+    });
+    final r = await _dio.post('/portaria/visitas/$visitaId/foto-entrada', data: form);
+    return Visita.fromJson(r.data['data'] as Map<String, dynamic>);
+  }
+
   // ===========================================================================
   // Add-on Controlo de Bens — itens da visita
   // ===========================================================================

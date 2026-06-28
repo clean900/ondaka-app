@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../../../shared/models/visita.dart';
@@ -107,6 +110,9 @@ class ValidacaoSucessoView extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
+          // Add-on Foto + conferência: foto do visitante (se activo).
+          _FotoVisitante(visita: visita),
+
           // Add-on Registo de Viaturas: campo de matrícula (se activo).
           _CampoMatricula(visita: visita),
 
@@ -212,6 +218,90 @@ class ValidacaoSucessoView extends StatelessWidget {
     final min = dt.minute.toString().padLeft(2, '0');
     final seg = dt.second.toString().padLeft(2, '0');
     return '$hora:$min:$seg';
+  }
+}
+
+/// Foto do visitante — só aparece se o add-on Foto + conferência estiver activo.
+class _FotoVisitante extends StatefulWidget {
+  final Visita visita;
+  const _FotoVisitante({required this.visita});
+
+  @override
+  State<_FotoVisitante> createState() => _FotoVisitanteState();
+}
+
+class _FotoVisitanteState extends State<_FotoVisitante> {
+  final _picker = ImagePicker();
+  bool _activo = false;
+  bool _enviando = false;
+  String? _url;
+
+  @override
+  void initState() {
+    super.initState();
+    _verificar();
+  }
+
+  Future<void> _verificar() async {
+    await PortariaFeatures.instance.garantirCarregado();
+    if (mounted && PortariaFeatures.instance.ativo('foto_conferencia')) {
+      setState(() => _activo = true);
+    }
+  }
+
+  Future<void> _tirar() async {
+    File? f;
+    try {
+      final img = await _picker.pickImage(source: ImageSource.camera, maxWidth: 1280, imageQuality: 70);
+      if (img != null) f = File(img.path);
+    } catch (_) {}
+    if (f == null) return;
+    setState(() => _enviando = true);
+    try {
+      final v = await PortariaRepository().registarFotoEntrada(widget.visita.id, f);
+      if (mounted) setState(() => _url = v.fotoEntradaUrl);
+    } catch (_) {
+      Get.snackbar('Foto', 'Não foi possível guardar a foto.', snackPosition: SnackPosition.BOTTOM);
+    } finally {
+      if (mounted) setState(() => _enviando = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_activo) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: _url != null
+          ? Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.network(_url!, width: 54, height: 54, fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+                ),
+                const SizedBox(width: 10),
+                const Text('Foto do visitante registada',
+                    style: TextStyle(color: AppColors.successSoft, fontWeight: FontWeight.w600)),
+              ],
+            )
+          : SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: OutlinedButton.icon(
+                onPressed: _enviando ? null : _tirar,
+                icon: _enviando
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.cyanSoft))
+                    : const Icon(Icons.photo_camera_outlined, color: AppColors.cyanSoft),
+                label: const Text('Tirar foto do visitante',
+                    style: TextStyle(color: AppColors.cyanSoft, fontWeight: FontWeight.w700)),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: AppColors.cyan.withValues(alpha: 0.5)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+    );
   }
 }
 

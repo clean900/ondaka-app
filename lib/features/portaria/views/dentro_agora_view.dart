@@ -301,15 +301,33 @@ class DentroAgoraView extends StatelessWidget {
       return;
     }
 
+    final fotoUrl = visita.fotoEntradaUrl;
     final confirm = await Get.defaultDialog<bool>(
       title: 'Marcar saída',
       titleStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-      middleText:
-          'Registar saída de ${visita.visitante?.nome ?? "este visitante"}?',
-      middleTextStyle:
-          const TextStyle(color: AppColors.textMuted, fontSize: 13),
       backgroundColor: AppColors.surface,
       radius: 14,
+      // Conferência (add-on foto): mostra a foto da entrada para confirmar.
+      content: Column(
+        children: [
+          if (fotoUrl != null) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(fotoUrl, width: 160, height: 160, fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+            ),
+            const SizedBox(height: 10),
+            const Text('É este o visitante que sai?',
+                style: TextStyle(color: AppColors.warningSoft, fontSize: 13, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 4),
+          ],
+          Text(
+            'Registar saída de ${visita.visitante?.nome ?? "este visitante"}?',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+          ),
+        ],
+      ),
       textCancel: 'Cancelar',
       textConfirm: 'Marcar saída',
       confirmTextColor: AppColors.bgDark,
