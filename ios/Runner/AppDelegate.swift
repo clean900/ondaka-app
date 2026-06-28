@@ -62,7 +62,7 @@ import flutter_callkit_incoming
     data.appName = "ONDAKA"
     // Reencaminha todo o payload (room, signaling_url, ice_servers, origem…)
     // para o Dart reconstruir a chamada ao atender.
-    data.extra = p as? [String: Any] ?? [:]
+    data.extra = p as NSDictionary
 
     SwiftFlutterCallkitIncomingPlugin.sharedInstance?.showCallkitIncoming(data, fromPushKit: true) {
       completion()
