@@ -104,6 +104,7 @@ class ValidarOtpController extends GetxController {
       final r = await PortariaOfflineService.instance.validarOffline(qr: qr, otp: otp);
       visitaAutorizada.value = r.visita;
       listaNegraAlerta.value = r.listaNegra;
+      acessoInfo.value = null; // offline: o cache não traz horários/áreas
       offline.value = true;
     } on OfflineValidacaoException catch (oe) {
       errorMessage.value = oe.mensagem;
