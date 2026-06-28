@@ -202,6 +202,10 @@ class DentroAgoraView extends StatelessWidget {
                 icon: Icons.timer,
                 label: _formatarDuracao(minutosDentro),
               ),
+              if (visita.matricula != null && visita.matricula!.isNotEmpty) ...[
+                const SizedBox(width: 8),
+                _chipInfo(icon: Icons.directions_car, label: visita.matricula!),
+              ],
             ],
           ),
           const SizedBox(height: 14),

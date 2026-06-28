@@ -39,6 +39,7 @@ class Visita {
   final DateTime? saiuEm;
   final MetodoValidacao metodoValidacao;
   final String? observacoes;
+  final String? matricula;
 
   // Relações opcionais (quando backend as carregou via with())
   final Visitante? visitante;
@@ -56,6 +57,7 @@ class Visita {
     this.saiuEm,
     required this.metodoValidacao,
     this.observacoes,
+    this.matricula,
     this.visitante,
     this.fraccao,
   });
@@ -75,6 +77,7 @@ class Visita {
           : null,
       metodoValidacao: MetodoValidacao.fromString(json['metodo_validacao'] as String),
       observacoes: json['observacoes'] as String?,
+      matricula: json['matricula'] as String?,
       visitante: json['visitante'] != null
           ? Visitante.fromJson(json['visitante'] as Map<String, dynamic>)
           : null,

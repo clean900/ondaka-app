@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../shared/models/visita.dart';
 import '../repositories/portaria_repository.dart';
+import '../services/portaria_features.dart';
 import 'itens_visita_view.dart';
 
 /// Ecrã mostrado após validação bem-sucedida.
@@ -105,6 +106,9 @@ class ValidacaoSucessoView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
+
+          // Add-on Registo de Viaturas: campo de matrícula (se activo).
+          _CampoMatricula(visita: visita),
 
           // Add-on Controlo de Bens: botão só aparece se o add-on estiver activo.
           _BotaoRegistarItens(visita: visita),
@@ -208,6 +212,115 @@ class ValidacaoSucessoView extends StatelessWidget {
     final min = dt.minute.toString().padLeft(2, '0');
     final seg = dt.second.toString().padLeft(2, '0');
     return '$hora:$min:$seg';
+  }
+}
+
+/// Campo de matrícula — só aparece se o add-on Registo de Viaturas estiver activo.
+class _CampoMatricula extends StatefulWidget {
+  final Visita visita;
+  const _CampoMatricula({required this.visita});
+
+  @override
+  State<_CampoMatricula> createState() => _CampoMatriculaState();
+}
+
+class _CampoMatriculaState extends State<_CampoMatricula> {
+  final _ctrl = TextEditingController();
+  bool _activo = false;
+  bool _guardando = false;
+  bool _guardada = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _verificar();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _verificar() async {
+    await PortariaFeatures.instance.garantirCarregado();
+    if (mounted && PortariaFeatures.instance.ativo('registo_viaturas')) {
+      setState(() => _activo = true);
+    }
+  }
+
+  Future<void> _guardar() async {
+    final m = _ctrl.text.trim();
+    if (m.isEmpty) return;
+    setState(() => _guardando = true);
+    try {
+      await PortariaRepository().registarMatricula(widget.visita.id, m);
+      if (mounted) setState(() => _guardada = true);
+    } catch (_) {
+      Get.snackbar('Matrícula', 'Não foi possível guardar.', snackPosition: SnackPosition.BOTTOM);
+    } finally {
+      if (mounted) setState(() => _guardando = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_activo) return const SizedBox.shrink();
+    if (_guardada) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Row(
+          children: [
+            const Icon(Icons.directions_car, color: AppColors.successSoft, size: 18),
+            const SizedBox(width: 8),
+            Text('Matrícula ${_ctrl.text.trim()} registada',
+                style: const TextStyle(color: AppColors.successSoft, fontWeight: FontWeight.w600)),
+          ],
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _ctrl,
+              textCapitalization: TextCapitalization.characters,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'Matrícula do veículo (opcional)',
+                labelStyle: const TextStyle(color: AppColors.textMuted),
+                prefixIcon: const Icon(Icons.directions_car_outlined, color: AppColors.cyanSoft),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.cyan),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          SizedBox(
+            height: 52,
+            child: ElevatedButton(
+              onPressed: _guardando ? null : _guardar,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.cyan,
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: _guardando
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                  : const Text('Guardar', style: TextStyle(fontWeight: FontWeight.w700)),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

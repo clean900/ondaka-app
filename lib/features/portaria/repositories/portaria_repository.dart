@@ -133,6 +133,23 @@ class PortariaRepository {
         '${dt.day.toString().padLeft(2, '0')}';
   }
 
+  /// Add-ons da portaria activos para a empresa (controlo_bens, registo_viaturas,
+  /// foto_conferencia, livro_ocorrencias, dashboard_portaria).
+  Future<Map<String, bool>> features() async {
+    final r = await _dio.get('/portaria/features');
+    final data = (r.data['data'] as Map).cast<String, dynamic>();
+    return data.map((k, v) => MapEntry(k, v == true));
+  }
+
+  /// Regista/atualiza a matrícula do veículo de uma visita (add-on registo_viaturas).
+  Future<Visita> registarMatricula(int visitaId, String matricula) async {
+    final r = await _dio.post(
+      '/portaria/visitas/$visitaId/matricula',
+      data: {'matricula': matricula},
+    );
+    return Visita.fromJson(r.data['data'] as Map<String, dynamic>);
+  }
+
   // ===========================================================================
   // Add-on Controlo de Bens — itens da visita
   // ===========================================================================
