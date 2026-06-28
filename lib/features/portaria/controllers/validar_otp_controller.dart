@@ -136,21 +136,24 @@ class ValidarOtpController extends GetxController {
   String _extrairErroDio(DioException e) {
     if (e.response?.data is Map) {
       final data = e.response!.data as Map;
-      if (data.containsKey('message')) {
+      if (data['message'] is String && (data['message'] as String).isNotEmpty) {
         return data['message'] as String;
       }
-      if (data.containsKey('errors')) {
-        final errors = data['errors'] as Map;
-        final primeira = errors.values.first as List;
-        return primeira.first as String;
+      if (data['errors'] is Map && (data['errors'] as Map).isNotEmpty) {
+        final primeira = (data['errors'] as Map).values.first;
+        if (primeira is List && primeira.isNotEmpty) {
+          return primeira.first.toString();
+        }
       }
     }
 
+    if (e.response?.statusCode == 500) {
+      return 'Erro no servidor. Tente mais tarde.';
+    }
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout) {
       return 'Ligação lenta. Tente novamente.';
     }
-
     if (e.type == DioExceptionType.connectionError) {
       return 'Sem ligação à internet.';
     }

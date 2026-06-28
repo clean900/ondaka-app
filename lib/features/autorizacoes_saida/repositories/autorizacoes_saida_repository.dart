@@ -15,7 +15,9 @@ class AutorizacoesSaidaRepository {
   Future<List<PedidoAutorizacaoBem>> pendentes() async {
     try {
       final r = await _dio.get('/visitas/itens/pendentes-autorizacao');
-      return (r.data['data'] as List)
+      final lista = r.data is Map ? r.data['data'] : null;
+      if (lista is! List) return [];
+      return lista
           .cast<Map<String, dynamic>>()
           .map(PedidoAutorizacaoBem.fromJson)
           .toList();

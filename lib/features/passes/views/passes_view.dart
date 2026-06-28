@@ -131,7 +131,7 @@ class _PasseCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             '${passe.tipoAcesso[0].toUpperCase()}${passe.tipoAcesso.substring(1)}'
-            '${passe.validaDesde != null ? ' · ${fmt.format(passe.validaDesde!)} → ${fmt.format(passe.validaAte!)}' : ''}',
+            '${passe.validaDesde != null && passe.validaAte != null ? ' · ${fmt.format(passe.validaDesde!)} → ${fmt.format(passe.validaAte!)}' : ''}',
             style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
           ),
           if (passe.aprovado && passe.pdfUrl != null) ...[
