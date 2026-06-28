@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -8,6 +9,7 @@ import 'verificar_visitante_view.dart';
 import '../../chamadas/views/ligar_view.dart';
 import '../../sos_guarda/views/sos_guarda_lista_view.dart';
 import '../../sos_guarda/repositories/sos_guarda_repository.dart';
+import '../../sos/repositories/sos_repository.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
@@ -69,7 +71,11 @@ class HomeGuardaView extends StatelessWidget {
                     letterSpacing: 0.5,
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 28),
+
+                // === BOTÃO DE PÂNICO (emergência imediata da portaria) ===
+                _botaoPanico(),
+                const SizedBox(height: 18),
 
                 // === Card SOS (PRIORIDADE MÁXIMA) ===
                 _SosGuardaCard(),
@@ -178,6 +184,86 @@ class HomeGuardaView extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Widget _botaoPanico() {
+    return InkWell(
+      onTap: _acionarPanico,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 20),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFEF4444), Color(0xFFB91C1C)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(color: const Color(0xFFEF4444).withValues(alpha: 0.35), blurRadius: 18, offset: const Offset(0, 6)),
+          ],
+        ),
+        child: Row(
+          children: const [
+            Icon(Icons.crisis_alert, color: Colors.white, size: 34),
+            SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('BOTÃO DE PÂNICO',
+                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                  SizedBox(height: 2),
+                  Text('Emergência imediata — alerta guardas e gestão',
+                      style: TextStyle(color: Colors.white70, fontSize: 12.5)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _acionarPanico() async {
+    final confirm = await Get.defaultDialog<bool>(
+      title: 'Acionar pânico?',
+      titleStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Color(0xFFEF4444)),
+      middleText: 'Vai disparar um alerta de emergência imediato. Guardas e gestão são notificados já.',
+      middleTextStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+      backgroundColor: AppColors.surface,
+      radius: 14,
+      textCancel: 'Cancelar',
+      textConfirm: 'ACIONAR',
+      confirmTextColor: Colors.white,
+      buttonColor: const Color(0xFFEF4444),
+      onConfirm: () => Get.back(result: true),
+      onCancel: () => Get.back(result: false),
+    );
+    if (confirm != true) return;
+
+    Get.dialog(
+      const Center(child: CircularProgressIndicator(color: Color(0xFFEF4444))),
+      barrierDismissible: false,
+    );
+    try {
+      await SosRepository().criarAlerta(
+        tipo: 'panico',
+        descricao: 'Botão de pânico acionado na portaria.',
+        localizacao: 'Portaria',
+      );
+      if (Get.isDialogOpen ?? false) Get.back();
+      Get.snackbar('Pânico acionado', 'Alerta enviado. Ajuda a caminho.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFFEF4444),
+          colorText: Colors.white);
+    } catch (e) {
+      if (Get.isDialogOpen ?? false) Get.back();
+      final msg = (e is DioException && e.response?.data is Map)
+          ? (e.response!.data['message']?.toString() ?? 'Não foi possível acionar o pânico. Tente de novo.')
+          : 'Não foi possível acionar o pânico. Tente de novo.';
+      Get.snackbar('Erro', msg, snackPosition: SnackPosition.BOTTOM);
+    }
   }
 
   Widget _accaoGrande({
