@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 
 import '../../../core/services/api_service.dart';
@@ -176,23 +178,41 @@ class PortariaRepository {
   }
 
   /// Regista um item NÃO declarado à entrada, detectado na saída (anomalia).
+  /// Envia uma foto obrigatória (multipart) e fica a aguardar autorização.
   Future<VisitaItem> registarItemNaoDeclarado(
     int visitaId, {
     required String descricao,
+    required File foto,
     int quantidade = 1,
     String? identificador,
     String? observacoes,
   }) async {
     try {
+      final form = FormData.fromMap({
+        'descricao': descricao,
+        'quantidade': quantidade,
+        if (identificador != null && identificador.isNotEmpty) 'identificador': identificador,
+        if (observacoes != null && observacoes.isNotEmpty) 'observacoes': observacoes,
+        'foto': await MultipartFile.fromFile(
+          foto.path,
+          filename: 'bem_${visitaId}_${foto.path.split('/').last}',
+        ),
+      });
       final response = await _dio.post(
         '/portaria/visitas/$visitaId/itens/nao-declarado',
-        data: {
-          'descricao': descricao,
-          'quantidade': quantidade,
-          if (identificador != null && identificador.isNotEmpty) 'identificador': identificador,
-          if (observacoes != null && observacoes.isNotEmpty) 'observacoes': observacoes,
-        },
+        data: form,
       );
+      return VisitaItem.fromJson(response.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _mapearAddon(e);
+    }
+  }
+
+  /// Guarda retém um bem à espera de autorização (sem resposta/recusa) → o
+  /// visitante sai sem o bem e a saída desbloqueia.
+  Future<VisitaItem> reterItem(int visitaId, int itemId) async {
+    try {
+      final response = await _dio.post('/portaria/visitas/$visitaId/itens/$itemId/reter');
       return VisitaItem.fromJson(response.data['data'] as Map<String, dynamic>);
     } on DioException catch (e) {
       throw _mapearAddon(e);

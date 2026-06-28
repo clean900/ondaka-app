@@ -11,6 +11,7 @@ import 'package:get/get.dart';
 
 import 'api_service.dart';
 import 'storage_service.dart';
+import '../../features/autorizacoes_saida/views/autorizacoes_saida_view.dart';
 import '../../features/avisos/views/aviso_detalhe_view.dart';
 import '../../features/sos_guarda/views/sos_alarme_view.dart';
 import '../../features/sos_guarda/utils/sos_sirene.dart';
@@ -170,10 +171,17 @@ class PushNotificationService extends GetxService {
         _abrirAlarmeSos(Map<String, dynamic>.from(data as Map));
       } else if (tipo == 'chamada_recebida') {
         _abrirChamada(Map<String, dynamic>.from(data as Map));
+      } else if (tipo == 'autorizar_saida_bem' || tipo == 'item_nao_declarado') {
+        _abrirAutorizacoesSaida();
       }
     } catch (_) {
       // payload antigo (string simples) — ignora.
     }
+  }
+
+  /// Abre o ecrã de autorização de saída de bens (add-on Controlo de Bens).
+  void _abrirAutorizacoesSaida() {
+    Get.to(() => const AutorizacoesSaidaView());
   }
 
   void _mostrarNotificacaoLocal(RemoteMessage message) {
@@ -256,6 +264,9 @@ class PushNotificationService extends GetxService {
         _abrirAposArranque(() => _abrirAlarmeSos(msgInicial.data));
       } else if (msgInicial != null && tipoInicial == 'chamada_recebida') {
         _abrirAposArranque(() => _abrirChamada(msgInicial.data));
+      } else if (msgInicial != null &&
+          (tipoInicial == 'autorizar_saida_bem' || tipoInicial == 'item_nao_declarado')) {
+        _abrirAposArranque(_abrirAutorizacoesSaida);
       } else {
         final launch = await _localNotif.getNotificationAppLaunchDetails();
         if (launch?.didNotificationLaunchApp ?? false) {
@@ -284,6 +295,8 @@ class PushNotificationService extends GetxService {
       _abrirAlarmeSos(data);
     } else if (tipo == 'chamada_recebida') {
       _abrirChamada(data);
+    } else if (tipo == 'autorizar_saida_bem' || tipo == 'item_nao_declarado') {
+      _abrirAutorizacoesSaida();
     }
   }
 

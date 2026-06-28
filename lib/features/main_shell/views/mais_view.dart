@@ -7,6 +7,8 @@ import '../../../app/theme/app_colors.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../assembleias/views/minhas_assembleias_view.dart';
+import '../../autorizacoes_saida/repositories/autorizacoes_saida_repository.dart';
+import '../../autorizacoes_saida/views/autorizacoes_saida_view.dart';
 import '../../encomendas/views/encomendas_shell_view.dart';
 import '../../prestadores/views/prestadores_view.dart';
 import '../../marketplace/views/marketplace_view.dart';
@@ -200,6 +202,7 @@ class MaisView extends StatelessWidget {
         return ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           children: [
+            if (!ehFamiliar) const _AutorizacoesSaidaBanner(),
             GridView.count(
               crossAxisCount: 2,
               shrinkWrap: true,
@@ -293,6 +296,73 @@ class _RodapeLegal extends StatelessWidget {
           style: TextStyle(color: AppColors.textFaint, fontSize: 11),
         ),
       ],
+    );
+  }
+}
+
+/// Banner que aparece no topo do "Mais" só quando o condómino tem bens à espera
+/// da sua autorização de saída (add-on Controlo de Bens). Caso contrário fica
+/// invisível — não polui quem não tem o add-on.
+class _AutorizacoesSaidaBanner extends StatefulWidget {
+  const _AutorizacoesSaidaBanner();
+
+  @override
+  State<_AutorizacoesSaidaBanner> createState() => _AutorizacoesSaidaBannerState();
+}
+
+class _AutorizacoesSaidaBannerState extends State<_AutorizacoesSaidaBanner> {
+  int _pendentes = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _carregar();
+  }
+
+  Future<void> _carregar() async {
+    try {
+      final lista = await AutorizacoesSaidaRepository().pendentes();
+      if (mounted) setState(() => _pendentes = lista.length);
+    } catch (_) {
+      // add-on inativo ou erro → banner fica escondido
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_pendentes == 0) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: () async {
+          await Get.to(() => const AutorizacoesSaidaView());
+          _carregar();
+        },
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.warning.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.warning.withValues(alpha: 0.5)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.inventory_2_outlined, color: AppColors.warningSoft),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  _pendentes == 1
+                      ? '1 bem a aguardar a sua autorização de saída'
+                      : '$_pendentes bens a aguardar a sua autorização de saída',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13.5),
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: AppColors.warningSoft),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

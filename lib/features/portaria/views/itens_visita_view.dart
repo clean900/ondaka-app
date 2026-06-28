@@ -1,5 +1,9 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../../../shared/models/visita.dart';
@@ -31,6 +35,7 @@ class _ItensVisitaViewState extends State<ItensVisitaView> {
   bool _addonInativo = false;
   String? _erro;
   bool _aProcessar = false;
+  Timer? _poll;
 
   bool get _ehSaida => widget.modo == ModoItens.saida;
 
@@ -40,11 +45,31 @@ class _ItensVisitaViewState extends State<ItensVisitaView> {
     _carregar();
   }
 
-  Future<void> _carregar() async {
-    setState(() {
-      _carregando = true;
-      _erro = null;
-    });
+  @override
+  void dispose() {
+    _poll?.cancel();
+    super.dispose();
+  }
+
+  /// Enquanto houver itens à espera de autorização (na saída), faz polling
+  /// silencioso para o ecrã do guarda actualizar quando o condómino responder.
+  void _gerirPolling() {
+    final temPendentes = _ehSaida && _itens.any((i) => i.aguardaAutorizacao);
+    if (temPendentes) {
+      _poll ??= Timer.periodic(const Duration(seconds: 6), (_) => _carregar(silencioso: true));
+    } else {
+      _poll?.cancel();
+      _poll = null;
+    }
+  }
+
+  Future<void> _carregar({bool silencioso = false}) async {
+    if (!silencioso) {
+      setState(() {
+        _carregando = true;
+        _erro = null;
+      });
+    }
     try {
       final itens = await _repo.listarItens(widget.visita.id);
       if (!mounted) return;
@@ -52,6 +77,7 @@ class _ItensVisitaViewState extends State<ItensVisitaView> {
         _itens = itens;
         _carregando = false;
       });
+      _gerirPolling();
     } on AddonInativoException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -63,12 +89,14 @@ class _ItensVisitaViewState extends State<ItensVisitaView> {
       if (!mounted) return;
       setState(() {
         _carregando = false;
-        _erro = 'Não foi possível carregar os itens.';
+        if (!silencioso) _erro = 'Não foi possível carregar os itens.';
       });
     }
   }
 
-  int get _porResolver => _itens.where((i) => i.estaDentro).length;
+  final ImagePicker _picker = ImagePicker();
+
+  int get _porResolver => _itens.where((i) => i.porResolver).length;
 
   @override
   Widget build(BuildContext context) {
@@ -100,20 +128,24 @@ class _ItensVisitaViewState extends State<ItensVisitaView> {
       children: [
         _cabecalhoVisitante(),
         Expanded(
-          child: _itens.isEmpty
-              ? _vazioView()
-              : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-                  itemCount: _itens.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (_, i) => _itemCard(_itens[i]),
-                ),
+          child: RefreshIndicator(
+            color: AppColors.cyan,
+            onRefresh: _carregar,
+            child: _itens.isEmpty
+                ? ListView(children: [SizedBox(height: 120, child: _vazioView())])
+                : ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                    itemCount: _itens.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemBuilder: (_, i) => _itemCard(_itens[i]),
+                  ),
+          ),
         ),
         if (_ehSaida)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
             child: TextButton.icon(
-              onPressed: _aProcessar ? null : () => _abrirFormAdicionar(naoDeclarado: true),
+              onPressed: _aProcessar ? null : _iniciarNaoDeclarado,
               icon: const Icon(Icons.report_problem_outlined, size: 18, color: AppColors.warningSoft),
               label: const Text('Item não declarado à entrada',
                   style: TextStyle(color: AppColors.warningSoft, fontWeight: FontWeight.w600)),
@@ -142,7 +174,7 @@ class _ItensVisitaViewState extends State<ItensVisitaView> {
             Text(
               _porResolver == 0
                   ? 'Todos os itens resolvidos.'
-                  : '$_porResolver item(ns) por resolver — marque saiu ou ficou.',
+                  : '$_porResolver item(ns) por resolver (incl. à espera de autorização).',
               style: TextStyle(
                 color: _porResolver == 0 ? AppColors.successSoft : AppColors.warningSoft,
                 fontSize: 13,
@@ -222,6 +254,24 @@ class _ItensVisitaViewState extends State<ItensVisitaView> {
               ],
             ),
           ],
+          if (_ehSaida && item.aguardaAutorizacao) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const Icon(Icons.hourglass_top, size: 15, color: AppColors.purpleSoft),
+                const SizedBox(width: 6),
+                const Expanded(
+                  child: Text('Aguarda autorização do morador',
+                      style: TextStyle(color: AppColors.purpleSoft, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                ),
+                TextButton(
+                  onPressed: _aProcessar ? null : () => _reter(item),
+                  style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8)),
+                  child: const Text('Reter', style: TextStyle(color: AppColors.dangerSoft, fontWeight: FontWeight.w700, fontSize: 12.5)),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -231,6 +281,8 @@ class _ItensVisitaViewState extends State<ItensVisitaView> {
     final cor = switch (item.estado) {
       'saiu' => AppColors.success,
       'ficou' => AppColors.warning,
+      'aguarda_autorizacao' => AppColors.purpleSoft,
+      'retido' => AppColors.danger,
       _ => AppColors.cyan,
     };
     return Container(
@@ -323,6 +375,40 @@ class _ItensVisitaViewState extends State<ItensVisitaView> {
     }
   }
 
+  Future<void> _reter(VisitaItem item) async {
+    final ok = await Get.defaultDialog<bool>(
+      title: 'Reter o bem?',
+      titleStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+      middleText:
+          'Sem autorização do morador, o bem fica retido na portaria e o visitante sai sem ele. Confirmar?',
+      middleTextStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+      backgroundColor: AppColors.surface,
+      radius: 14,
+      textCancel: 'Cancelar',
+      textConfirm: 'Reter',
+      confirmTextColor: Colors.white,
+      buttonColor: AppColors.danger,
+      onConfirm: () => Get.back(result: true),
+      onCancel: () => Get.back(result: false),
+    );
+    if (ok != true) return;
+
+    setState(() => _aProcessar = true);
+    try {
+      final atualizado = await _repo.reterItem(widget.visita.id, item.id);
+      if (!mounted) return;
+      setState(() {
+        final idx = _itens.indexWhere((i) => i.id == item.id);
+        if (idx != -1) _itens[idx] = atualizado;
+      });
+      _gerirPolling();
+    } catch (e) {
+      _snack('Não foi possível reter o item.');
+    } finally {
+      if (mounted) setState(() => _aProcessar = false);
+    }
+  }
+
   Future<void> _removerItem(VisitaItem item) async {
     setState(() => _aProcessar = true);
     try {
@@ -349,7 +435,26 @@ class _ItensVisitaViewState extends State<ItensVisitaView> {
     }
   }
 
-  void _abrirFormAdicionar({bool naoDeclarado = false}) {
+  /// Item não declarado: captura foto obrigatória (câmara) → abre o formulário.
+  Future<void> _iniciarNaoDeclarado() async {
+    File? foto;
+    try {
+      final XFile? img = await _picker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 1600,
+        imageQuality: 75,
+      );
+      if (img != null) foto = File(img.path);
+    } catch (_) {}
+    if (foto == null) {
+      _snack('É obrigatório fotografar o bem.');
+      return;
+    }
+    if (!mounted) return;
+    _abrirFormAdicionar(naoDeclarado: true, foto: foto);
+  }
+
+  void _abrirFormAdicionar({bool naoDeclarado = false, File? foto}) {
     final descricao = TextEditingController();
     final quantidade = TextEditingController(text: '1');
     final identificador = TextEditingController();
@@ -375,7 +480,7 @@ class _ItensVisitaViewState extends State<ItensVisitaView> {
                   style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
               if (naoDeclarado) ...[
                 const SizedBox(height: 6),
-                const Text('Será registado como anomalia e o gestor é notificado.',
+                const Text('Foto capturada. Vai aguardar autorização do morador (e o gestor é avisado).',
                     style: TextStyle(color: AppColors.warningSoft, fontSize: 12)),
               ],
               const SizedBox(height: 16),
@@ -406,6 +511,7 @@ class _ItensVisitaViewState extends State<ItensVisitaView> {
                       int.tryParse(quantidade.text.trim()) ?? 1,
                       identificador.text.trim(),
                       naoDeclarado: naoDeclarado,
+                      foto: foto,
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -413,7 +519,7 @@ class _ItensVisitaViewState extends State<ItensVisitaView> {
                     foregroundColor: Colors.black,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: Text(naoDeclarado ? 'Registar anomalia' : 'Registar item',
+                  child: Text(naoDeclarado ? 'Pedir autorização' : 'Registar item',
                       style: const TextStyle(fontWeight: FontWeight.w700)),
                 ),
               ),
@@ -449,13 +555,14 @@ class _ItensVisitaViewState extends State<ItensVisitaView> {
   }
 
   Future<void> _adicionar(String descricao, int quantidade, String identificador,
-      {bool naoDeclarado = false}) async {
+      {bool naoDeclarado = false, File? foto}) async {
     setState(() => _aProcessar = true);
     try {
-      final item = naoDeclarado
+      final item = (naoDeclarado && foto != null)
           ? await _repo.registarItemNaoDeclarado(
               widget.visita.id,
               descricao: descricao,
+              foto: foto,
               quantidade: quantidade < 1 ? 1 : quantidade,
               identificador: identificador,
             )
@@ -467,7 +574,7 @@ class _ItensVisitaViewState extends State<ItensVisitaView> {
             );
       if (!mounted) return;
       setState(() => _itens.add(item));
-      if (naoDeclarado) _snack('Anomalia registada. Gestor notificado.');
+      if (naoDeclarado) _snack('Pedido enviado. A aguardar autorização do morador.');
     } catch (e) {
       _snack('Não foi possível registar o item.');
     } finally {

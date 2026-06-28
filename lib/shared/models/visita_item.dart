@@ -41,9 +41,18 @@ class VisitaItem {
 
   bool get estaDentro => estado == 'dentro';
 
+  /// Estados que ainda bloqueiam o fecho da saída.
+  bool get porResolver =>
+      estado == 'dentro' || estado == 'aguarda_autorizacao';
+
+  /// Item à espera de autorização do condómino (não declarado à entrada).
+  bool get aguardaAutorizacao => estado == 'aguarda_autorizacao';
+
   String get estadoLabel => switch (estado) {
         'saiu' => 'Saiu',
         'ficou' => 'Ficou',
+        'aguarda_autorizacao' => 'Aguarda autorização',
+        'retido' => 'Retido',
         _ => 'Dentro',
       };
 }
