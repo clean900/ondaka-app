@@ -10,6 +10,9 @@ import '../../chamadas/views/ligar_view.dart';
 import '../../sos_guarda/views/sos_guarda_lista_view.dart';
 import '../../sos_guarda/repositories/sos_guarda_repository.dart';
 import '../../sos/repositories/sos_repository.dart';
+import '../services/portaria_features.dart';
+import 'ocorrencias_view.dart';
+import 'passagem_turno_view.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
@@ -136,6 +139,10 @@ class HomeGuardaView extends StatelessWidget {
                   onTap: () => Get.to(() => const LigarView()),
                   primary: false,
                 ),
+
+                // Add-on Livro de Ocorrências (só aparece se activo)
+                const _AccoesLivroOcorrencias(),
+
                 const SizedBox(height: 32),
 
                 // Info card
@@ -491,6 +498,78 @@ class _SosGuardaCardState extends State<_SosGuardaCard> {
                   style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Botões do add-on Livro de Ocorrências (só aparecem se o add-on estiver activo).
+class _AccoesLivroOcorrencias extends StatefulWidget {
+  const _AccoesLivroOcorrencias();
+
+  @override
+  State<_AccoesLivroOcorrencias> createState() => _AccoesLivroOcorrenciasState();
+}
+
+class _AccoesLivroOcorrenciasState extends State<_AccoesLivroOcorrencias> {
+  bool _activo = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _verificar();
+  }
+
+  Future<void> _verificar() async {
+    await PortariaFeatures.instance.garantirCarregado();
+    if (mounted && PortariaFeatures.instance.ativo('livro_ocorrencias')) {
+      setState(() => _activo = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_activo) return const SizedBox.shrink();
+    return Column(
+      children: [
+        const SizedBox(height: 14),
+        _botao(Icons.assignment_outlined, 'Livro de ocorrências', 'Registar e ver ocorrências do turno',
+            () => Get.to(() => const OcorrenciasView())),
+        const SizedBox(height: 14),
+        _botao(Icons.swap_horiz, 'Passagem de turno', 'Deixar resumo para o próximo guarda',
+            () => Get.to(() => const PassagemTurnoView())),
+      ],
+    );
+  }
+
+  Widget _botao(IconData icon, String label, String sub, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: AppColors.cyanSoft, size: 26),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 2),
+                  Text(sub, style: const TextStyle(color: AppColors.textMuted, fontSize: 12.5)),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: AppColors.textMuted),
           ],
         ),
       ),

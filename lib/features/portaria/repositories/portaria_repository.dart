@@ -6,6 +6,7 @@ import '../../../core/services/api_service.dart';
 import '../../../shared/models/historico_visitas_page.dart';
 import '../../../shared/models/visita.dart';
 import '../../../shared/models/visita_item.dart';
+import '../models/ocorrencia_portaria.dart';
 
 /// Lançada quando o add-on Controlo de Bens não está activo (HTTP 402).
 class AddonInativoException implements Exception {
@@ -276,6 +277,55 @@ class PortariaRepository {
     } on DioException catch (e) {
       throw _mapearAddon(e);
     }
+  }
+
+  // ===========================================================================
+  // Add-on Livro de Ocorrências + Passagem de Turno
+  // ===========================================================================
+
+  Future<List<OcorrenciaPortaria>> listarOcorrencias({bool? abertas}) async {
+    final r = await _dio.get('/portaria/ocorrencias', queryParameters: {
+      if (abertas != null) 'abertas': abertas ? 1 : 0,
+    });
+    return (r.data['data'] as List)
+        .cast<Map<String, dynamic>>()
+        .map(OcorrenciaPortaria.fromJson)
+        .toList();
+  }
+
+  Future<OcorrenciaPortaria> criarOcorrencia({
+    required String tipo,
+    required String descricao,
+    File? foto,
+    double? latitude,
+    double? longitude,
+  }) async {
+    final form = FormData.fromMap({
+      'tipo': tipo,
+      'descricao': descricao,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
+      if (foto != null)
+        'foto': await MultipartFile.fromFile(foto.path, filename: foto.path.split('/').last),
+    });
+    final r = await _dio.post('/portaria/ocorrencias', data: form);
+    return OcorrenciaPortaria.fromJson(r.data['data'] as Map<String, dynamic>);
+  }
+
+  Future<OcorrenciaPortaria> resolverOcorrencia(int id, {String? notas}) async {
+    final r = await _dio.post('/portaria/ocorrencias/$id/resolver', data: {
+      if (notas != null && notas.isNotEmpty) 'notas': notas,
+    });
+    return OcorrenciaPortaria.fromJson(r.data['data'] as Map<String, dynamic>);
+  }
+
+  Future<void> criarPassagemTurno(String resumo) async {
+    await _dio.post('/portaria/passagem-turno', data: {'resumo': resumo});
+  }
+
+  Future<List<Map<String, dynamic>>> listarPassagensTurno() async {
+    final r = await _dio.get('/portaria/passagens-turno');
+    return (r.data['data'] as List).cast<Map<String, dynamic>>();
   }
 
   Exception _mapearAddon(DioException e) {
