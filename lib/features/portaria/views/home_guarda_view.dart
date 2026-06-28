@@ -613,6 +613,10 @@ class _SyncBadgeState extends State<_SyncBadge> {
     if (r.erro) {
       Get.snackbar('Sem ligação', 'Não foi possível sincronizar. Tente quando houver rede.',
           snackPosition: SnackPosition.BOTTOM);
+    } else if (r.descartadas > 0) {
+      Get.snackbar('Atenção',
+          '${r.sincronizadas} enviada(s); ${r.descartadas} não foi(ram) aceite(s) pelo servidor. Verifique com o gestor.',
+          snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 6));
     } else if (r.sincronizadas > 0) {
       Get.snackbar('Sincronizado',
           r.sincronizadas == 1 ? '1 entrada enviada.' : '${r.sincronizadas} entradas enviadas.',

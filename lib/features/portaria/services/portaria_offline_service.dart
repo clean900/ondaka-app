@@ -119,10 +119,11 @@ class PortariaOfflineService {
 
   // --- Flush (enviar fila) ---
 
-  /// Tenta enviar a fila. Devolve quantas sincronizaram, quantas ficaram e se houve erro.
-  Future<({int sincronizadas, int restantes, bool erro})> flush() async {
+  /// Tenta enviar a fila. Devolve quantas sincronizaram, quantas ficaram,
+  /// quantas foram descartadas (erro permanente) e se houve erro de rede.
+  Future<({int sincronizadas, int restantes, int descartadas, bool erro})> flush() async {
     final fila = await _lerFila();
-    if (fila.isEmpty) return (sincronizadas: 0, restantes: 0, erro: false);
+    if (fila.isEmpty) return (sincronizadas: 0, restantes: 0, descartadas: 0, erro: false);
     try {
       final payload = fila
           .map((e) => {
@@ -140,6 +141,7 @@ class PortariaOfflineService {
           .toSet();
 
       var sincronizadas = 0;
+      var descartadas = 0;
       final restante = <Map<String, dynamic>>[];
       for (final e in fila) {
         final key = e['idempotency_key']?.toString();
@@ -150,26 +152,27 @@ class PortariaOfflineService {
         // Falhou: conta a tentativa; desiste após o limite (erro provavelmente permanente).
         final tentativas = ((e['tentativas'] as num?)?.toInt() ?? 0) + 1;
         if (tentativas >= _maxTentativas) {
+          descartadas++;
           debugPrint('Portaria offline: entrada descartada após $tentativas tentativas ($key)');
           continue;
         }
         restante.add({...e, 'tentativas': tentativas});
       }
       await _guardarFila(restante);
-      return (sincronizadas: sincronizadas, restantes: restante.length, erro: false);
+      return (sincronizadas: sincronizadas, restantes: restante.length, descartadas: descartadas, erro: false);
     } catch (e) {
       debugPrint('Portaria offline: flush falhou — $e');
       // sem rede → mantém a fila para tentar de novo mais tarde
-      return (sincronizadas: 0, restantes: fila.length, erro: true);
+      return (sincronizadas: 0, restantes: fila.length, descartadas: 0, erro: true);
     }
   }
 
   /// Conveniência: ao abrir o home com rede, sincroniza fila e refaz o cache.
-  Future<({int sincronizadas, bool erro})> sincronizarSeOnline() async {
+  Future<({int sincronizadas, int descartadas, bool erro})> sincronizarSeOnline() async {
     final r = await flush();
     await pull();
     await carregarEstado();
-    return (sincronizadas: r.sincronizadas, erro: r.erro);
+    return (sincronizadas: r.sincronizadas, descartadas: r.descartadas, erro: r.erro);
   }
 
   // --- Validação offline ---
