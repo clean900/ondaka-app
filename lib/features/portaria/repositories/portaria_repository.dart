@@ -328,6 +328,22 @@ class PortariaRepository {
     return (r.data['data'] as List).cast<Map<String, dynamic>>();
   }
 
+  // ===========================================================================
+  // Modo Offline da Portaria (#6) — sync
+  // ===========================================================================
+
+  /// Descarrega pré-aprovações activas + lista negra para validar offline.
+  Future<Map<String, dynamic>> sincronizarPull() async {
+    final r = await _dio.get('/portaria/sync');
+    return (r.data['data'] as Map).cast<String, dynamic>();
+  }
+
+  /// Envia o lote de entradas feitas offline. Devolve os resultados por item.
+  Future<List<Map<String, dynamic>>> sincronizarEntradas(List<Map<String, dynamic>> entradas) async {
+    final r = await _dio.post('/portaria/sync/entradas', data: {'entradas': entradas});
+    return (r.data['data'] as List).cast<Map<String, dynamic>>();
+  }
+
   Exception _mapearAddon(DioException e) {
     if (e.response?.statusCode == 402) {
       final msg = e.response?.data is Map

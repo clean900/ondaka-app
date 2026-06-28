@@ -25,6 +25,22 @@ class ValidarOtpView extends StatelessWidget {
           final alerta = controller.listaNegraAlerta.value;
           return Column(
             children: [
+              if (controller.offline.value)
+                Container(
+                  width: double.infinity,
+                  color: AppColors.warning.withValues(alpha: 0.15),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.cloud_off, color: AppColors.warningSoft, size: 18),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text('Entrada validada OFFLINE — será sincronizada quando houver rede.',
+                            style: TextStyle(color: AppColors.warningSoft, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                      ),
+                    ],
+                  ),
+                ),
               if (alerta != null) _bannerListaNegra(alerta),
               Expanded(
                 child: ValidacaoSucessoView(

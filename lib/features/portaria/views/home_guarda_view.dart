@@ -11,6 +11,7 @@ import '../../sos_guarda/views/sos_guarda_lista_view.dart';
 import '../../sos_guarda/repositories/sos_guarda_repository.dart';
 import '../../sos/repositories/sos_repository.dart';
 import '../services/portaria_features.dart';
+import '../services/portaria_offline_service.dart';
 import 'ocorrencias_view.dart';
 import 'passagem_turno_view.dart';
 
@@ -74,7 +75,12 @@ class HomeGuardaView extends StatelessWidget {
                     letterSpacing: 0.5,
                   ),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 14),
+
+                // === Sincronização offline (entradas pendentes) ===
+                const _SyncBadge(),
+
+                const SizedBox(height: 14),
 
                 // === BOTÃO DE PÂNICO (emergência imediata da portaria) ===
                 _botaoPanico(),
@@ -574,6 +580,77 @@ class _AccoesLivroOcorrenciasState extends State<_AccoesLivroOcorrencias> {
         ),
       ),
     );
+  }
+}
+
+/// Modo offline: ao abrir o home (com rede) descarrega o cache e envia a fila.
+/// Mostra um aviso quando há entradas por sincronizar.
+class _SyncBadge extends StatefulWidget {
+  const _SyncBadge();
+
+  @override
+  State<_SyncBadge> createState() => _SyncBadgeState();
+}
+
+class _SyncBadgeState extends State<_SyncBadge> {
+  final _svc = PortariaOfflineService.instance;
+  bool _sincronizando = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _svc.carregarEstado();
+    _svc.sincronizarSeOnline(); // tenta enviar fila + refrescar cache offline
+  }
+
+  /// Sincronização manual (toque) com feedback ao guarda.
+  Future<void> _sincronizarManual() async {
+    if (_sincronizando) return;
+    _sincronizando = true;
+    final r = await _svc.sincronizarSeOnline();
+    _sincronizando = false;
+    if (!mounted) return;
+    if (r.erro) {
+      Get.snackbar('Sem ligação', 'Não foi possível sincronizar. Tente quando houver rede.',
+          snackPosition: SnackPosition.BOTTOM);
+    } else if (r.sincronizadas > 0) {
+      Get.snackbar('Sincronizado',
+          r.sincronizadas == 1 ? '1 entrada enviada.' : '${r.sincronizadas} entradas enviadas.',
+          snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final n = _svc.pendentes.value;
+      if (n == 0) return const SizedBox.shrink();
+      return InkWell(
+        onTap: _sincronizarManual,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.warning.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.warning.withValues(alpha: 0.4)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.sync_problem, color: AppColors.warningSoft, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  n == 1 ? '1 entrada por sincronizar' : '$n entradas por sincronizar',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13.5),
+                ),
+              ),
+              const Text('Sincronizar', style: TextStyle(color: AppColors.warningSoft, fontWeight: FontWeight.w700, fontSize: 12.5)),
+            ],
+          ),
+        ),
+      );
+    });
   }
 }
 

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../shared/models/visita.dart';
 import '../repositories/portaria_repository.dart';
+import '../services/portaria_offline_service.dart';
 
 /// Controller do ecrã "Validar OTP".
 class ValidarOtpController extends GetxController {
@@ -21,6 +22,8 @@ class ValidarOtpController extends GetxController {
   final visitaAutorizada = Rx<Visita?>(null);
   // Alerta da Lista Negra (não bloqueia — avisa o guarda).
   final listaNegraAlerta = Rx<Map<String, dynamic>?>(null);
+  // Entrada validada em modo OFFLINE (sem rede) — fica pendente de sync.
+  final offline = false.obs;
 
   @override
   void onClose() {
@@ -50,7 +53,11 @@ class ValidarOtpController extends GetxController {
       visitaAutorizada.value = r.visita;
       listaNegraAlerta.value = r.listaNegra;
     } on DioException catch (e) {
-      errorMessage.value = _extrairErroDio(e);
+      if (_ehOffline(e)) {
+        await _validarOffline(otp: otp);
+      } else {
+        errorMessage.value = _extrairErroDio(e);
+      }
     } catch (e) {
       errorMessage.value = 'Erro inesperado. Tente novamente.';
     } finally {
@@ -75,7 +82,11 @@ class ValidarOtpController extends GetxController {
       visitaAutorizada.value = r.visita;
       listaNegraAlerta.value = r.listaNegra;
     } on DioException catch (e) {
-      errorMessage.value = _extrairErroDio(e);
+      if (_ehOffline(e)) {
+        await _validarOffline(qr: t);
+      } else {
+        errorMessage.value = _extrairErroDio(e);
+      }
     } catch (e) {
       errorMessage.value = 'Erro inesperado. Tente novamente.';
     } finally {
@@ -83,11 +94,33 @@ class ValidarOtpController extends GetxController {
     }
   }
 
+  /// Sem rede → valida contra o cache offline e mete na fila de sync.
+  Future<void> _validarOffline({String? qr, String? otp}) async {
+    try {
+      final r = await PortariaOfflineService.instance.validarOffline(qr: qr, otp: otp);
+      visitaAutorizada.value = r.visita;
+      listaNegraAlerta.value = r.listaNegra;
+      offline.value = true;
+    } on OfflineValidacaoException catch (oe) {
+      errorMessage.value = oe.mensagem;
+    } catch (_) {
+      errorMessage.value = 'Sem ligação e não foi possível validar offline.';
+    }
+  }
+
+  /// Só erros de CONECTIVIDADE real disparam o fallback offline. Timeouts de
+  /// recepção/envio podem significar que o servidor recebeu e respondeu (ex.: 422
+  /// código inválido) — não devem virar "sucesso offline".
+  bool _ehOffline(DioException e) =>
+      e.type == DioExceptionType.connectionError ||
+      e.type == DioExceptionType.connectionTimeout;
+
   void proximaValidacao() {
     otpController.clear();
     errorMessage.value = null;
     visitaAutorizada.value = null;
     listaNegraAlerta.value = null;
+    offline.value = false;
   }
 
   void voltar() {
