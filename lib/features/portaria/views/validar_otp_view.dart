@@ -23,6 +23,7 @@ class ValidarOtpView extends StatelessWidget {
       body: Obx(() {
         if (controller.visitaAutorizada.value != null) {
           final alerta = controller.listaNegraAlerta.value;
+          final acesso = controller.acessoInfo.value;
           return Column(
             children: [
               if (controller.offline.value)
@@ -42,6 +43,7 @@ class ValidarOtpView extends StatelessWidget {
                   ),
                 ),
               if (alerta != null) _bannerListaNegra(alerta),
+              if (acesso != null) _bannerAcesso(acesso),
               Expanded(
                 child: ValidacaoSucessoView(
                   visita: controller.visitaAutorizada.value!,
@@ -260,6 +262,53 @@ class ValidarOtpView extends StatelessWidget {
                     style: const TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                 ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Add-on #9: aviso/info de acesso por horário/área.
+  /// - Fora do horário → banner âmbar de aviso (não bloqueia).
+  /// - Dentro do horário / só área → faixa informativa.
+  Widget _bannerAcesso(Map<String, dynamic> acesso) {
+    final foraHorario = acesso['fora_horario'] == true;
+    final horarioDesc = acesso['horario_descricao']?.toString();
+    final areas = (acesso['areas'] as List?)?.map((e) => e.toString()).where((e) => e.isNotEmpty).toList() ?? const [];
+
+    final cor = foraHorario ? AppColors.warning : AppColors.cyan;
+    final icone = foraHorario ? Icons.schedule : Icons.event_available;
+
+    return Container(
+      width: double.infinity,
+      color: cor.withValues(alpha: 0.13),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icone, color: cor, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (foraHorario)
+                  const Text('⚠️ FORA DO HORÁRIO AUTORIZADO',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: 0.5)),
+                if (horarioDesc != null && horarioDesc.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text('Horário: $horarioDesc',
+                        style: const TextStyle(color: Colors.white, fontSize: 12.5)),
+                  ),
+                if (areas.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text('Áreas autorizadas: ${areas.join(', ')}',
+                        style: const TextStyle(color: Colors.white, fontSize: 12.5)),
+                  ),
               ],
             ),
           ),

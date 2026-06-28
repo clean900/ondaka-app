@@ -22,25 +22,25 @@ class PortariaRepository {
   PortariaRepository({Dio? dio}) : _dio = dio ?? ApiService.to.dio;
 
   /// Valida um código OTP introduzido pelo guarda.
-  Future<({Visita visita, Map<String, dynamic>? listaNegra})> validarOtp(String otpCode) async {
+  Future<({Visita visita, Map<String, dynamic>? listaNegra, Map<String, dynamic>? acesso})> validarOtp(String otpCode) async {
     final response = await _dio.post(
       '/portaria/validar-otp',
       data: {'otp_code': otpCode},
     );
 
     final data = response.data['data'] as Map<String, dynamic>;
-    return (visita: Visita.fromJson(data), listaNegra: _alertaListaNegra(response));
+    return (visita: Visita.fromJson(data), listaNegra: _alertaListaNegra(response), acesso: _alertaAcesso(response));
   }
 
   /// Valida um QR token (scaneado pelo guarda).
-  Future<({Visita visita, Map<String, dynamic>? listaNegra})> validarQr(String qrToken) async {
+  Future<({Visita visita, Map<String, dynamic>? listaNegra, Map<String, dynamic>? acesso})> validarQr(String qrToken) async {
     final response = await _dio.post(
       '/portaria/validar-qr',
       data: {'qr_token': qrToken},
     );
 
     final data = response.data['data'] as Map<String, dynamic>;
-    return (visita: Visita.fromJson(data), listaNegra: _alertaListaNegra(response));
+    return (visita: Visita.fromJson(data), listaNegra: _alertaListaNegra(response), acesso: _alertaAcesso(response));
   }
 
   /// Pré-verificação na Lista Negra (BI/matrícula/nome) antes de autorizar.
@@ -57,6 +57,13 @@ class PortariaRepository {
   Map<String, dynamic>? _alertaListaNegra(Response response) {
     final ln = response.data is Map ? response.data['lista_negra'] : null;
     return ln is Map ? Map<String, dynamic>.from(ln) : null;
+  }
+
+  /// Add-on #9: aviso/info de acesso por horário/área (null se add-on inativo
+  /// ou sem restrições).
+  Map<String, dynamic>? _alertaAcesso(Response response) {
+    final a = response.data is Map ? response.data['acesso'] : null;
+    return a is Map ? Map<String, dynamic>.from(a) : null;
   }
 
   /// Lista visitantes que estão dentro do condomínio agora.

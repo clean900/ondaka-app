@@ -22,6 +22,8 @@ class ValidarOtpController extends GetxController {
   final visitaAutorizada = Rx<Visita?>(null);
   // Alerta da Lista Negra (não bloqueia — avisa o guarda).
   final listaNegraAlerta = Rx<Map<String, dynamic>?>(null);
+  // Add-on #9: aviso/info de acesso por horário/área (null se inativo/sem restrições).
+  final acessoInfo = Rx<Map<String, dynamic>?>(null);
   // Entrada validada em modo OFFLINE (sem rede) — fica pendente de sync.
   final offline = false.obs;
 
@@ -52,6 +54,7 @@ class ValidarOtpController extends GetxController {
       final r = await _repository.validarOtp(otp);
       visitaAutorizada.value = r.visita;
       listaNegraAlerta.value = r.listaNegra;
+      acessoInfo.value = r.acesso;
     } on DioException catch (e) {
       if (_ehOffline(e)) {
         await _validarOffline(otp: otp);
@@ -81,6 +84,7 @@ class ValidarOtpController extends GetxController {
       final r = await _repository.validarQr(t);
       visitaAutorizada.value = r.visita;
       listaNegraAlerta.value = r.listaNegra;
+      acessoInfo.value = r.acesso;
     } on DioException catch (e) {
       if (_ehOffline(e)) {
         await _validarOffline(qr: t);
@@ -120,6 +124,7 @@ class ValidarOtpController extends GetxController {
     errorMessage.value = null;
     visitaAutorizada.value = null;
     listaNegraAlerta.value = null;
+    acessoInfo.value = null;
     offline.value = false;
   }
 
