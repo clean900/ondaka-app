@@ -313,8 +313,17 @@ class PushNotificationService extends GetxService {
   }
 
   Future<void> registarApoUsLogin() async {
+    // Busca o token fresco — evita a corrida em que _setup() ainda não obteve o
+    // token quando o login termina (ficava null e nada era registado).
+    try {
+      _fcmToken ??= await _messaging.getToken();
+    } catch (e) {
+      debugPrint('[Push] getToken no login falhou: $e');
+    }
     if (_fcmToken != null) {
       await _registarTokenNoBackend(_fcmToken!);
+    } else {
+      debugPrint('[Push] Sem token FCM no login — registo adiado.');
     }
     registarVoipTokenSeIos();
   }
