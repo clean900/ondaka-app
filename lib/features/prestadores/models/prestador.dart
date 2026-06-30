@@ -12,6 +12,7 @@ class Prestador {
   final double mediaEstrelas;
   final int totalAvaliacoes;
   final bool destacado;
+  final bool certificado;
   final double? distanciaKm;
 
   Prestador({
@@ -27,6 +28,7 @@ class Prestador {
     this.mediaEstrelas = 0,
     this.totalAvaliacoes = 0,
     this.destacado = false,
+    this.certificado = false,
     this.distanciaKm,
   });
 
@@ -47,6 +49,7 @@ class Prestador {
       mediaEstrelas: toDouble(json['media_estrelas']) ?? 0,
       totalAvaliacoes: (json['total_avaliacoes'] as num?)?.toInt() ?? 0,
       destacado: json['destacado'] == true,
+      certificado: json['certificado'] == true,
       distanciaKm: toDouble(json['distancia_km']),
     );
   }

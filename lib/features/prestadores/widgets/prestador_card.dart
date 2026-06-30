@@ -49,6 +49,24 @@ class PrestadorCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      if (prestador.certificado) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.success.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.verified, size: 12, color: AppColors.successSoft),
+                              SizedBox(width: 3),
+                              Text('Certificado', style: TextStyle(fontSize: 11, color: AppColors.successSoft)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                      ],
                       if (prestador.destacado)
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
