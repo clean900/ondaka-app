@@ -221,7 +221,7 @@ class PushNotificationService extends GetxService {
         return;
       }
 
-      _fcmToken = await _messaging.getToken();
+      _fcmToken = await _obterTokenFcm();
       debugPrint('[Push] FCM Token: $_fcmToken');
 
       if (_fcmToken != null && (await StorageService.to.getAuthToken()) != null) {
@@ -300,11 +300,36 @@ class PushNotificationService extends GetxService {
     }
   }
 
+  /// Obtém o token FCM. No iOS, o FCM token só está disponível depois do APNs
+  /// token (que chega de forma assíncrona após o registo APNs) — sem esperar por
+  /// ele, getToken() devolvia null e o iPhone nunca registava. Esperamos até
+  /// ~8s pelo APNs antes de pedir o FCM token.
+  Future<String?> _obterTokenFcm() async {
+    try {
+      if (Platform.isIOS) {
+        String? apns = await _messaging.getAPNSToken();
+        for (var i = 0; i < 8 && apns == null; i++) {
+          await Future.delayed(const Duration(seconds: 1));
+          apns = await _messaging.getAPNSToken();
+        }
+        if (apns == null) {
+          debugPrint('[Push] APNs token indisponível (chave .p8 no Firebase?).');
+          return null;
+        }
+        debugPrint('[Push] APNs token obtido.');
+      }
+      return await _messaging.getToken();
+    } catch (e) {
+      debugPrint('[Push] Erro a obter token FCM: $e');
+      return null;
+    }
+  }
+
   Future<void> _registarTokenNoBackend(String token) async {
     try {
       await ApiService.to.dio.post(
         '/devices/register-fcm-token',
-        data: {'token': token, 'platform': 'android'},
+        data: {'token': token, 'platform': Platform.isIOS ? 'ios' : 'android'},
       );
       debugPrint('[Push] Token registado no backend.');
     } on DioException catch (e) {
@@ -316,7 +341,7 @@ class PushNotificationService extends GetxService {
     // Busca o token fresco — evita a corrida em que _setup() ainda não obteve o
     // token quando o login termina (ficava null e nada era registado).
     try {
-      _fcmToken ??= await _messaging.getToken();
+      _fcmToken ??= await _obterTokenFcm();
     } catch (e) {
       debugPrint('[Push] getToken no login falhou: $e');
     }

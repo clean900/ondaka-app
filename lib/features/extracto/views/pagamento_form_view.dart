@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../../../core/services/api_service.dart';
@@ -139,23 +140,63 @@ class _PagamentoFormViewState extends State<PagamentoFormView> {
   }
 
   Future<void> _escolherImagem() async {
-    final XFile? imagem = await _picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-    );
-    if (imagem != null && mounted) {
-      setState(() => _comprovativo = File(imagem.path));
+    try {
+      final XFile? imagem = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+      if (imagem != null && mounted) {
+        setState(() => _comprovativo = File(imagem.path));
+      }
+    } catch (e) {
+      _mostrarErroFoto(e, camara: false);
     }
   }
 
   Future<void> _tirarFoto() async {
-    final XFile? imagem = await _picker.pickImage(
-      source: ImageSource.camera,
-      imageQuality: 85,
-    );
-    if (imagem != null && mounted) {
-      setState(() => _comprovativo = File(imagem.path));
+    try {
+      // No Android o CAMERA está declarado no manifest (QR scanner), por isso
+      // o image_picker exige a permissão concedida em runtime — pedimo-la aqui.
+      if (Platform.isAndroid) {
+        final estado = await Permission.camera.request();
+        if (!estado.isGranted) {
+          if (mounted) _mostrarErroFoto('camera permission denied', camara: true);
+          return;
+        }
+      }
+      final XFile? imagem = await _picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 85,
+      );
+      if (imagem != null && mounted) {
+        setState(() => _comprovativo = File(imagem.path));
+      }
+    } catch (e) {
+      _mostrarErroFoto(e, camara: true);
     }
+  }
+
+  /// Sem try/catch o botão falhava em silêncio quando a permissão de
+  /// câmara/fotos estava negada. Mostra o motivo e guia para as Definições.
+  void _mostrarErroFoto(Object e, {required bool camara}) {
+    final texto = e.toString().toLowerCase();
+    final permissaoNegada = texto.contains('denied') ||
+        texto.contains('permission') ||
+        texto.contains('access') ||
+        texto.contains('photo_access') ||
+        texto.contains('camera_access');
+    final recurso = camara ? 'à câmara' : 'às fotos';
+    Get.snackbar(
+      permissaoNegada ? 'Permissão necessária' : 'Não foi possível abrir',
+      permissaoNegada
+          ? 'Permita o acesso $recurso nas Definições do telemóvel e tente novamente.'
+          : 'Ocorreu um erro ao aceder $recurso. Tente novamente.',
+      backgroundColor: const Color(0xFFEF4444),
+      colorText: Colors.white,
+      snackPosition: SnackPosition.BOTTOM,
+      duration: const Duration(seconds: 5),
+      margin: const EdgeInsets.all(12),
+    );
   }
 
   Future<void> _gerarReferenciaMcx() async {
