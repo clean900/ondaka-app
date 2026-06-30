@@ -1,6 +1,9 @@
 /// Relatório financeiro de transparência do condomínio (dados agregados),
 /// devolvido por GET /api/condomino/relatorio-financeiro.
 class RelatorioFinanceiro {
+  /// Falso quando a gestão ainda não publicou a transparência (toggle do gestor).
+  final bool publicado;
+  final String? mensagem;
   final String? condominio;
   final int meses;
   final double receita;
@@ -17,6 +20,8 @@ class RelatorioFinanceiro {
   final double despesasTotal;
 
   RelatorioFinanceiro({
+    required this.publicado,
+    required this.mensagem,
     required this.condominio,
     required this.meses,
     required this.receita,
@@ -46,6 +51,8 @@ class RelatorioFinanceiro {
     double d(dynamic v) => (v as num?)?.toDouble() ?? 0;
 
     return RelatorioFinanceiro(
+      publicado: (j['publicado'] as bool?) ?? true,
+      mensagem: j['mensagem'] as String?,
       condominio: j['condominio'] as String?,
       meses: (j['meses'] as num?)?.toInt() ?? 12,
       receita: d(fin['receita']),

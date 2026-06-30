@@ -34,6 +34,12 @@ class TransparenciaView extends StatelessWidget {
         if (r == null) {
           return _Erro(mensagem: 'Sem dados.', onRetry: c.carregar);
         }
+        if (!r.publicado) {
+          return _Erro(
+            mensagem: r.mensagem ?? 'A gestão ainda não publicou a transparência financeira deste condomínio.',
+            onRetry: c.carregar,
+          );
+        }
 
         return RefreshIndicator(
           onRefresh: c.carregar,
