@@ -14,6 +14,7 @@ import '../../prestadores/views/prestadores_view.dart';
 import '../../marketplace/views/marketplace_view.dart';
 import '../../extracto/views/extracto_view.dart';
 import '../../acordos/views/acordos_view.dart';
+import '../../transparencia/views/transparencia_view.dart';
 import '../../faqs/views/faqs_view.dart';
 import '../../suporte/views/suporte_view.dart';
 import '../../admin_chatbot_faqs/views/admin_chatbot_faqs_page.dart';
@@ -104,6 +105,14 @@ class MaisView extends StatelessWidget {
               titulo: 'Taxas',
               subtitulo: 'Valores e pagamentos',
               onTap: () => Get.to(() => const ExtractoView()),
+            ),
+          if (!ehFamiliar)
+            _MaisCard(
+              icon: Icons.pie_chart_outline,
+              cor: AppColors.success,
+              titulo: 'Contas do Condomínio',
+              subtitulo: 'Transparência financeira',
+              onTap: () => Get.to(() => const TransparenciaView()),
             ),
           if (!ehFamiliar)
             _MaisCard(
