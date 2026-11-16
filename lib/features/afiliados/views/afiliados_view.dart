@@ -5,13 +5,14 @@ import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../core/services/auth_service.dart';
 import '../controllers/afiliados_controller.dart';
+import 'apresentacao_tab.dart';
 import 'clientes_tab.dart';
 import 'comissoes_tab.dart';
 import 'painel_tab.dart';
 import 'pagamentos_tab.dart';
 
-/// Programa de Afiliados na app — os mesmos quatro ecrãs do portal web:
-/// painel, clientes indicados, comissões e pagamentos.
+/// Programa de Afiliados na app — os mesmos ecrãs do portal web: painel,
+/// clientes indicados, comissões, pagamentos e a apresentação do programa.
 ///
 /// SÓ LEITURA. A candidatura, a adesão e os dados bancários continuam na web:
 /// têm termos a aceitar e um IBAN a conferir, e isso não se faz de passagem.
@@ -29,7 +30,7 @@ class AfiliadosView extends StatelessWidget {
     final c = Get.put(AfiliadosController());
 
     return DefaultTabController(
-      length: 4,
+      length: 5,
       child: Builder(builder: (context) {
         return Scaffold(
           backgroundColor: AppColors.bgDark,
@@ -63,6 +64,7 @@ class AfiliadosView extends StatelessWidget {
                 Tab(text: 'Clientes'),
                 Tab(text: 'Comissões'),
                 Tab(text: 'Pagamentos'),
+                Tab(text: 'Apresentação'),
               ],
             ),
           ),
@@ -72,6 +74,7 @@ class AfiliadosView extends StatelessWidget {
               ClientesTab(c: c),
               ComissoesTab(c: c),
               PagamentosTab(c: c),
+              ApresentacaoTab(c: c),
             ],
           ),
         );

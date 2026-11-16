@@ -279,12 +279,17 @@ class PainelAfiliado {
   final List<Escalao> escaloes;
   final bool programaActivo;
 
+  /// Endereço da apresentação comercial do programa (o mesmo documento que o
+  /// painel web mostra). Vazio enquanto a API não o devolver.
+  final String apresentacaoUrl;
+
   const PainelAfiliado({
     required this.afiliado,
     required this.resumo,
     required this.materiais,
     required this.escaloes,
     required this.programaActivo,
+    required this.apresentacaoUrl,
   });
 
   factory PainelAfiliado.fromJson(Map<String, dynamic> j) {
@@ -302,6 +307,7 @@ class PainelAfiliado {
           .map((e) => Escalao.fromJson((e as Map).cast<String, dynamic>()))
           .toList(),
       programaActivo: (cfg['programa_activo'] ?? j['programa_activo']) == true,
+      apresentacaoUrl: (j['apresentacao_url'] ?? '').toString(),
     );
   }
 }

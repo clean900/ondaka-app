@@ -139,6 +139,8 @@ class AfiliadosController extends GetxController {
       case 3:
         await carregarPagamentos(forcar: true);
         break;
+      // 4 = Apresentação: o que há a recarregar é o endereço, que vem no
+      // painel; o WebView recarrega-se sozinho ao reabrir.
       default:
         await carregarPainel();
     }
