@@ -39,6 +39,37 @@ class AuthService extends GetxService {
   /// condominio (F-03). Define o acesso ao ecra de aprovacao de despesas.
   final eMembroComissao = false.obs;
 
+  /// Verdadeiro se o utilizador tem ficha no Programa de Afiliados. Define se
+  /// a area de afiliado aparece no menu. Nao basta ter a role: a adesao
+  /// faz-se na web, e so quem ja aderiu tem painel para ver.
+  final eAfiliado = false.obs;
+
+  /// O role que manda, quando o utilizador tem varios.
+  ///
+  /// POR ORDEM, E NAO `roles.first`: a ordem com que o Spatie devolve os
+  /// papeis nao e garantida, e um gestor que tambem seja afiliado nao pode
+  /// acordar um dia com a app de afiliado em vez da de gestao. 'afiliado' vem
+  /// em ultimo de proposito: so manda quando e o unico que a pessoa tem.
+  static const _prioridadeRoles = [
+    'super-admin',
+    'admin-empresa',
+    'gestor',
+    'administrador-condominio',
+    'funcionario',
+    'guarda',
+    'condomino',
+    'familiar',
+    'afiliado',
+  ];
+
+  static String _rolePrincipal(List<dynamic> roles) {
+    final nomes = roles.map((e) => e.toString()).toSet();
+    for (final r in _prioridadeRoles) {
+      if (nomes.contains(r)) return r;
+    }
+    return nomes.isNotEmpty ? nomes.first : '';
+  }
+
   /// Verdadeiro se o utilizador autenticado e um familiar (acesso limitado).
   bool get isFamiliar => roleAtual.value == 'familiar';
 
@@ -97,17 +128,19 @@ class AuthService extends GetxService {
 
       // Guardar dados do user
       final roles = user['roles'] as List;
+      final role = _rolePrincipal(roles);
       await _storage.saveUser(
         id: user['id'] as int,
         email: user['email'] as String?,
         name: user['name'] as String,
-        role: roles.isNotEmpty ? roles.first as String : '',
+        role: role,
         empresaGestoraId: user['empresa_gestora_id'] as int?,
         condominioNome: user['condominio_nome'] as String?,
       );
 
-      roleAtual.value = roles.isNotEmpty ? roles.first as String : '';
+      roleAtual.value = role;
       eMembroComissao.value = user['e_membro_comissao'] == true;
+      eAfiliado.value = user['e_afiliado'] == true;
       await carregarAcessos();
 
       return AuthSuccess(token: token, user: user);
@@ -138,18 +171,20 @@ class AuthService extends GetxService {
 
       // Re-grava no storage (mantém sincronizado com o backend)
       final roles = user['roles'] as List? ?? [];
+      final role = _rolePrincipal(roles);
       await _storage.saveUser(
         id: user['id'] as int,
         email: user['email'] as String?,
         name: user['name'] as String,
-        role: roles.isNotEmpty ? roles.first as String : '',
+        role: role,
         empresaGestoraId: user['empresa_gestora_id'] as int?,
         condominioNome: user['condominio_nome'] as String?,
       );
 
       // Define o role e carrega os acessos (token ja garantido aqui).
-      roleAtual.value = roles.isNotEmpty ? roles.first as String : '';
+      roleAtual.value = role;
       eMembroComissao.value = user['e_membro_comissao'] == true;
+      eAfiliado.value = user['e_afiliado'] == true;
       await carregarAcessos();
 
       return user;

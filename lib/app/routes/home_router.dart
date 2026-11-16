@@ -35,6 +35,13 @@ class HomeRouter {
       case 'super-admin':
         return AppRoutes.homeGestor;
 
+      // Só chega aqui quem TEM APENAS a role de afiliado (ver
+      // AuthService._rolePrincipal): não é condómino nem gere nada, por isso
+      // a casa dele é o portal do afiliado. Um gestor que também seja
+      // afiliado continua a entrar na gestão.
+      case 'afiliado':
+        return AppRoutes.afiliados;
+
       case 'condomino':
       case 'familiar':
       case null:

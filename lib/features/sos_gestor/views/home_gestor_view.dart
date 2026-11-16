@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../app/theme/app_colors.dart';
+import '../../afiliados/views/afiliados_view.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../sos_gestor/repositories/sos_gestor_repository.dart';
@@ -64,6 +65,12 @@ class HomeGestorView extends StatelessWidget {
                 // === Card SOS (PRIORIDADE MÁXIMA) ===
                 _SosGestorCard(),
                 const SizedBox(height: 14),
+
+                // === Programa de Afiliados (só a quem já é afiliado) ===
+                if (AuthService.to.eAfiliado.value) ...[
+                  _AfiliadosCard(),
+                  const SizedBox(height: 14),
+                ],
 
                 // === Info card ===
                 Container(
@@ -129,6 +136,57 @@ class HomeGestorView extends StatelessWidget {
       await AuthService.to.logout();
       Get.offAllNamed(AppRoutes.login);
     }
+  }
+}
+
+// ============================================================================
+
+/// Atalho para o Programa de Afiliados. Um gestor é quem melhor conhece outras
+/// gestoras de condomínio — é a ele que o programa mais rende.
+class _AfiliadosCard extends StatelessWidget {
+  const _AfiliadosCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Get.to(() => const AfiliadosView()),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.purple.withValues(alpha: 0.08),
+          border: Border.all(color: AppColors.purple.withValues(alpha: 0.3)),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: AppColors.purple.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.handshake_outlined, color: AppColors.purpleSoft, size: 24),
+            ),
+            const SizedBox(width: 14),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Programa de Afiliados',
+                      style: TextStyle(
+                          color: AppColors.textMain, fontSize: 15, fontWeight: FontWeight.w700)),
+                  SizedBox(height: 3),
+                  Text('Clientes indicados, comissões e pagamentos',
+                      style: TextStyle(color: AppColors.textMuted, fontSize: 12.5)),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: AppColors.textFaint),
+          ],
+        ),
+      ),
+    );
   }
 }
 

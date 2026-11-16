@@ -24,6 +24,7 @@ import '../../ordens/views/minhas_ordens_view.dart';
 import '../../tickets/views/meus_tickets_view.dart';
 import '../../equipa/views/equipa_view.dart';
 import '../../perfil/views/perfil_view.dart';
+import '../../afiliados/views/afiliados_view.dart';
 import '../../reservas/views/reservas_view.dart';
 import '../../familiares/views/familiares_view.dart';
 
@@ -161,6 +162,16 @@ class MaisView extends StatelessWidget {
               titulo: 'Minhas ordens',
               subtitulo: 'Facturas',
               onTap: () => Get.to(() => const MinhasOrdensView()),
+            ),
+          // Só a quem já é afiliado: a candidatura faz-se na web, e um cartão
+          // que leva a um painel vazio não serve a ninguém.
+          if (auth.eAfiliado.value)
+            _MaisCard(
+              icon: Icons.handshake_outlined,
+              cor: AppColors.purple,
+              titulo: 'Programa de Afiliados',
+              subtitulo: 'Comissões e clientes indicados',
+              onTap: () => Get.to(() => const AfiliadosView()),
             ),
           _MaisCard(
             icon: Icons.help_outline,

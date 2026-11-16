@@ -12,6 +12,7 @@ import '../../features/prestadores/views/prestadores_view.dart';
 import '../../features/marketplace/views/marketplace_view.dart';
 import '../../features/despesas_comissao/views/despesas_comissao_view.dart';
 import '../../features/documentos/views/documentos_view.dart';
+import '../../features/afiliados/views/afiliados_view.dart';
 import 'app_routes.dart';
 
 abstract class AppPages {
@@ -31,5 +32,8 @@ abstract class AppPages {
     GetPage(name: AppRoutes.marketplace, page: () => const MarketplaceView()),
     GetPage(name: AppRoutes.despesasComissao, page: () => const DespesasComissaoView()),
     GetPage(name: AppRoutes.documentos, page: () => const DocumentosView()),
+    // eHome: um afiliado sem condomínio nem empresa entra directamente aqui,
+    // e por isso este ecrã leva o botão de sair em vez da seta de voltar.
+    GetPage(name: AppRoutes.afiliados, page: () => const AfiliadosView(eHome: true)),
   ];
 }

@@ -36,4 +36,7 @@ abstract class AppRoutes {
 
   // Documentos do condomínio (F-01)
   static const documentos = '/documentos';
+
+  // Programa de Afiliados (portal do afiliado)
+  static const afiliados = '/afiliados';
 }
